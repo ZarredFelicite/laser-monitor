@@ -6,11 +6,11 @@
 set -euo pipefail
 
 # Change to project directory
-cd /home/hilton/git-repo
+cd /home/hilton/laser-monitor
 
 # Set up environment
 export PATH="/usr/bin:/bin:/usr/local/bin:/home/hilton/.local/bin"
-#export PYTHONPATH="/home/hilton/git-repo"
+#export PYTHONPATH="/home/hilton/laser-monitor"
 export LIBCAMERA_LOG_LEVELS="*:ERROR"
 
 # Log startup

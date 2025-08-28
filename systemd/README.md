@@ -14,7 +14,7 @@ This directory contains systemd service files to run the Laser Monitor system as
 
 ```bash
 # Install the services
-cd /home/hilton/git-repo/systemd
+cd /home/hilton/laser-monitor/systemd
 ./install-services.sh
 
 # Start both services

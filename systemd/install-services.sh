@@ -33,15 +33,15 @@ fi
 install_service() {
     local service_file="$1"
     local service_name="$(basename "$service_file")"
-    
+
     echo -e "${YELLOW}📋 Installing ${service_name}...${NC}"
-    
+
     # Copy service file to systemd directory
     sudo cp "$service_file" "/etc/systemd/system/"
-    
+
     # Set proper permissions
     sudo chmod 644 "/etc/systemd/system/$service_name"
-    
+
     echo -e "${GREEN}✅ ${service_name} installed${NC}"
 }
 
@@ -76,7 +76,7 @@ echo
 echo -e "${YELLOW}⚠️  Note:${NC} Make sure the config file exists: ${PROJECT_DIR}/config/test.config.py"
 echo -e "${YELLOW}⚠️  Note:${NC} Ensure camera permissions are set up correctly for user 'hilton'"
 echo -e "${YELLOW}⚠️  Note:${NC} Verify uv is installed and available: $(which uv 2>/dev/null || echo 'uv not found')"
-echo -e "${YELLOW}⚠️  Note:${NC} Services configured for: /home/hilton/git-repo"
+echo -e "${YELLOW}⚠️  Note:${NC} Services configured for: /home/hilton/laser-monitor"
 echo
 
 # Ask if user wants to start services now
@@ -85,13 +85,13 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}🚀 Starting laser-monitor.target...${NC}"
     sudo systemctl start laser-monitor.target
-    
+
     # Wait a moment and check status
     sleep 3
     echo
     echo -e "${BLUE}📊 Service status:${NC}"
     sudo systemctl status laser-monitor.target --no-pager -l
-    
+
     echo
     echo -e "${GREEN}✅ Services started! Check the logs if there are any issues.${NC}"
 else

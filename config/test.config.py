@@ -9,7 +9,7 @@ Usage:
 """
 
 # Reference image path
-refer_image = r"/home/hilton/git-repo/images/test.jpg"
+refer_image = r"/home/hilton/laser-monitor/images/test.jpg"
 
 # Visual prompt bounding boxes (normalized coordinates: x1, y1, x2, y2)
 visual_prompts = [[0.7494791666666667, 0.41388888888888886, 0.7640625, 0.4703703703703704], [0.18333333333333332, 0.4583333333333333, 0.190625, 0.4842592592592593]]

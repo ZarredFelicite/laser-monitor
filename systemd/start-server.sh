@@ -6,11 +6,11 @@
 set -euo pipefail
 
 # Change to project directory
-cd /home/hilton/git-repo
+cd /home/hilton/laser-monitor
 
 # Set up environment
 export PATH="/usr/bin:/bin:/usr/local/bin"
-export PYTHONPATH="/home/hilton/git-repo"
+export PYTHONPATH="/home/hilton/laser-monitor"
 export FLASK_ENV=production
 export FLASK_DEBUG=false
 

@@ -1,6 +1,6 @@
 [Unit]
 Description=Laser Monitor Detection System
-Documentation=file:///home/hilton/git-repo/README.md
+Documentation=file:///home/hilton/laser-monitor/README.md
 After=network.target
 Wants=network.target
 
@@ -8,14 +8,14 @@ Wants=network.target
 Type=simple
 User=hilton
 Group=users
-WorkingDirectory=/home/hilton/git-repo
+WorkingDirectory=/home/hilton/laser-monitor
 # Basic environment (detailed setup in wrapper script)
 Environment=DISPLAY=:0
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=PATH=/usr/bin:/bin:/usr/local/bin
 
 # Use wrapper script to handle system Python
-ExecStart=/home/hilton/git-repo/systemd/start-laser-monitor.sh
+ExecStart=/home/hilton/laser-monitor/systemd/start-laser-monitor.sh
 
 # Restart configuration
 Restart=always

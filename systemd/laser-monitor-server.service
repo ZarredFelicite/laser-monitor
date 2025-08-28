@@ -1,6 +1,6 @@
 [Unit]
 Description=Laser Monitor Web Dashboard Server
-Documentation=file:///home/hilton/git-repo/server/README.md
+Documentation=file:///home/hilton/laser-monitor/server/README.md
 After=network.target laser-monitor.service
 Wants=network.target
 BindsTo=laser-monitor.service
@@ -9,12 +9,12 @@ BindsTo=laser-monitor.service
 Type=simple
 User=hilton
 Group=users
-WorkingDirectory=/home/hilton/git-repo
+WorkingDirectory=/home/hilton/laser-monitor
 # Basic environment (detailed setup in wrapper script)
 Environment=PATH=/usr/bin:/bin:/usr/local/bin
 
 # Use wrapper script to handle system Python
-ExecStart=/home/hilton/git-repo/systemd/start-server.sh
+ExecStart=/home/hilton/laser-monitor/systemd/start-server.sh
 
 # Restart configuration
 Restart=always
@@ -36,7 +36,7 @@ NoNewPrivileges=true
 PrivateTmp=false
 ProtectSystem=false
 ProtectHome=false
-ReadOnlyPaths=/home/hilton/git-repo/output
+ReadOnlyPaths=/home/hilton/laser-monitor/output
 ReadWritePaths=/tmp
 
 # Network access for web server
