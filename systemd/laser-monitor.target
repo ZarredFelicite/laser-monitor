@@ -1,0 +1,9 @@
+[Unit]
+Description=Laser Monitor System (Detection + Web Dashboard)
+Documentation=file:///home/zarred/dev/laser_monitor/README.md
+Wants=laser-monitor.service laser-monitor-server.service
+After=laser-monitor.service laser-monitor-server.service
+AllowIsolate=yes
+
+[Install]
+WantedBy=multi-user.target

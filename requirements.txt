@@ -1,0 +1,22 @@
+# Minimal requirements for bbox (heuristic) mode only.
+# AI detection modes (text / visual) require optional packages:
+#   ultralytics, huggingface-hub, clip, ftfy, regex, wcwidth
+# Install them via pyproject optional extra: pip install .[ai]
+# Or manually uncomment the lines below.
+# Note: Core dependencies like twilio, flask are defined in pyproject.toml
+
+opencv-python>=4.5.0
+numpy>=1.21.0
+pyyaml>=6.0
+requests>=2.25.0
+pygame>=2.0.0
+setuptools<81
+python-dotenv>=1.0.0
+
+# --- Optional AI stack ---
+# ultralytics>=8.3.0
+# huggingface-hub>=0.16.0
+# clip @ git+https://github.com/ultralytics/CLIP.git@a6238961f9fab312d99c7709f8c7485b3f9a9b50
+# ftfy>=6.3.1
+# regex>=2024.11.6
+# wcwidth>=0.2.13

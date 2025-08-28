@@ -1,0 +1,73 @@
+[project]
+name = "laser-monitor"
+version = "0.1.0"
+description = "Laser Cutter Light Indicator Monitor using YOLOE"
+authors = [
+    {name = "zarred", email = "zarred@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+# Core dependencies kept intentionally minimal so that bbox (heuristic) mode works without heavy ML stack.
+# AI detection modes (text / visual) require installing the 'ai' optional extra.
+# Install with: pip install .[ai]
+# Or using uv: uv pip install .[ai]
+# Or just: pip install ultralytics clip ftfy regex wcwidth huggingface-hub
+
+dependencies = [
+    "opencv-python>=4.6.0",
+  #"pyqt5",
+    "liblo; sys_platform == 'darwin'",
+    "pyxdg",
+    "numpy>=1.23.0",
+    "numpy<2.0.0; sys_platform == 'darwin'",
+    "pyyaml>=5.3.1",
+    "requests>=2.23.0",
+    "pygame>=2.0.0",
+    "setuptools<81",
+    # Application specific
+    "schedule>=1.1.0",
+    "python-dotenv>=0.19.0",
+    "configparser>=5.2.0",
+    "flask>=3.0.0",
+    "twilio>=8.0.0",
+]
+
+[project.optional-dependencies]
+ai = [
+    "ultralytics>=8.3.0",
+    "huggingface-hub>=0.16.0",
+    "clip @ git+https://github.com/ultralytics/CLIP.git@a6238961f9fab312d99c7709f8c7485b3f9a9b50",
+    "ftfy>=6.3.1",
+    "regex>=2024.11.6",
+    "wcwidth>=0.2.13",
+]
+
+dev = [
+    "pytest>=6.0.0",
+    "black>=21.0.0",
+    "flake8>=3.9.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = { where = ["."], include = ["laser_monitor*"] } }
+
+[project.scripts]
+laser-monitor = "enhanced_monitor:main"
+setup-yoloe = "setup_yoloe:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.uv]
+environments = ["sys_platform == 'linux'"]

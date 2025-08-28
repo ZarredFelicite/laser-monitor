@@ -1,0 +1,59 @@
+[Unit]
+Description=Laser Monitor Detection System
+Documentation=file:///home/hilton/git-repo/README.md
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=hilton
+Group=users
+WorkingDirectory=/home/hilton/git-repo
+# Basic environment (detailed setup in wrapper script)
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=PATH=/usr/bin:/bin:/usr/local/bin
+
+# Use wrapper script to handle system Python
+ExecStart=/home/hilton/git-repo/systemd/start-laser-monitor.sh
+
+# Restart configuration
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=80%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=laser-monitor
+
+# Security settings (fully disabled for Pi camera access)
+NoNewPrivileges=false
+PrivateTmp=false
+ProtectSystem=false
+ProtectHome=false
+ProtectKernelTunables=false
+ProtectKernelModules=false
+ProtectControlGroups=false
+RestrictRealtime=false
+RestrictSUIDSGID=false
+RemoveIPC=false
+PrivateDevices=false
+ProtectHostname=false
+ProtectClock=false
+ProtectKernelLogs=false
+LockPersonality=false
+MemoryDenyWriteExecute=false
+RestrictNamespaces=false
+
+# Full device access for Pi camera
+DevicePolicy=auto
+SupplementaryGroups=video render gpio dialout
+
+[Install]
+WantedBy=multi-user.target

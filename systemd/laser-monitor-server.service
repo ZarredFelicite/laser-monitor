@@ -1,0 +1,49 @@
+[Unit]
+Description=Laser Monitor Web Dashboard Server
+Documentation=file:///home/hilton/git-repo/server/README.md
+After=network.target laser-monitor.service
+Wants=network.target
+BindsTo=laser-monitor.service
+
+[Service]
+Type=simple
+User=hilton
+Group=users
+WorkingDirectory=/home/hilton/git-repo
+# Basic environment (detailed setup in wrapper script)
+Environment=PATH=/usr/bin:/bin:/usr/local/bin
+
+# Use wrapper script to handle system Python
+ExecStart=/home/hilton/git-repo/systemd/start-server.sh
+
+# Restart configuration
+Restart=always
+RestartSec=5
+StartLimitInterval=300
+StartLimitBurst=10
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=laser-monitor-server
+
+# Security settings (relaxed for nix access)
+NoNewPrivileges=true
+PrivateTmp=false
+ProtectSystem=false
+ProtectHome=false
+ReadOnlyPaths=/home/hilton/git-repo/output
+ReadWritePaths=/tmp
+
+# Network access for web server
+PrivateNetwork=false
+
+# Network access for web server
+PrivateNetwork=false
+
+[Install]
+WantedBy=multi-user.target
