@@ -4,6 +4,15 @@ applyTo: '**'
 
 # AGENTS.md — Instructions & README summary for agents
 
+## Update (2025-08-29 - Machine History Retention Policy)
+
+- Changed machine history retention from "last 20/50 entries" to "last 7 days" time-based retention.
+- Updated MachineHistory.to_dict() to filter entries by date instead of entry count.
+- Added automatic cleanup of old history entries when adding new entries.
+- Modified load_machine_history() to only load entries from the last 7 days.
+- Added cleanup_machine_history() method to the cleanup process.
+- History cleanup now runs during regular file cleanup operations.
+
 ## Update (2025-08-26 - Configuration System Improvements)
 
 - Removed automatic loading of example_config.py - system now uses built-in defaults when no config is specified.

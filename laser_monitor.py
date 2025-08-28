@@ -105,6 +105,21 @@ class MachineHistory:
             self.last_active_time = entry.timestamp
         else:
             self.last_inactive_time = entry.timestamp
+        
+        # Clean up old entries (keep only last 7 days)
+        self.cleanup_old_entries(entry.timestamp)
+    
+    def cleanup_old_entries(self, cutoff_time: Optional[datetime] = None):
+        """Remove entries older than 7 days"""
+        if cutoff_time is None:
+            cutoff_time = datetime.now() - timedelta(days=7)
+        else:
+            cutoff_time = cutoff_time - timedelta(days=7)
+        
+        self.entries = [
+            entry for entry in self.entries 
+            if entry.timestamp >= cutoff_time
+        ]
     
     def get_inactive_duration(self) -> Optional[timedelta]:
         """Get duration since last active status"""
@@ -123,6 +138,13 @@ class MachineHistory:
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
+        # Filter entries to keep only the last 7 days
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        recent_entries = [
+            entry for entry in self.entries 
+            if entry.timestamp >= seven_days_ago
+        ]
+        
         return {
             "machine_id": self.machine_id,
             "last_active_time": self.last_active_time.isoformat() if self.last_active_time else None,
@@ -135,7 +157,7 @@ class MachineHistory:
                     "confidence": entry.confidence,
                     "details": entry.details
                 }
-                for entry in self.entries[-50:]  # Keep last 50 entries
+                for entry in recent_entries
             ]
         }
 
@@ -1092,6 +1114,7 @@ class LaserMonitor:
         try:
             self.cleanup_detection_images()
             self.cleanup_detection_logs()
+            self.cleanup_machine_history()
         except Exception as e:
             self.logger.error(f"Error during cleanup: {e}")
     
@@ -1151,12 +1174,34 @@ class LaserMonitor:
                 except Exception as e:
                     self.logger.warning(f"Failed to delete {file_path.name}: {e}")
     
+    def cleanup_machine_history(self):
+        """Remove machine history entries older than 7 days"""
+        try:
+            total_entries_before = sum(len(h.entries) for h in self.machine_histories.values())
+            entries_removed = 0
+            
+            for machine_id, history in self.machine_histories.items():
+                entries_before = len(history.entries)
+                history.cleanup_old_entries()
+                entries_after = len(history.entries)
+                entries_removed += entries_before - entries_after
+            
+            if entries_removed > 0:
+                self.logger.info(f"Cleaned up {entries_removed} old machine history entries (keeping last 7 days)")
+                # Save the cleaned history
+                self.save_machine_history()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to cleanup machine history: {e}")
+    
     def load_machine_history(self):
         """Load machine history from file"""
         if self.history_file.exists():
             try:
                 with open(self.history_file, 'r') as f:
                     data = json.load(f)
+                    seven_days_ago = datetime.now() - timedelta(days=7)
+                    
                     for machine_id, machine_data in data.items():
                         history = MachineHistory(machine_id=machine_id)
                         if machine_data.get('last_active_time'):
@@ -1164,19 +1209,23 @@ class LaserMonitor:
                         if machine_data.get('last_inactive_time'):
                             history.last_inactive_time = datetime.fromisoformat(machine_data['last_inactive_time'])
                         
+                        # Only load entries from the last 7 days
                         for entry_data in machine_data.get('entries', []):
-                            entry = MachineStatusEntry(
-                                timestamp=datetime.fromisoformat(entry_data['timestamp']),
-                                status=entry_data['status'],
-                                class_name=entry_data['class_name'],
-                                confidence=entry_data['confidence'],
-                                details=entry_data.get('details', {})
-                            )
-                            history.entries.append(entry)
+                            entry_timestamp = datetime.fromisoformat(entry_data['timestamp'])
+                            if entry_timestamp >= seven_days_ago:
+                                entry = MachineStatusEntry(
+                                    timestamp=entry_timestamp,
+                                    status=entry_data['status'],
+                                    class_name=entry_data['class_name'],
+                                    confidence=entry_data['confidence'],
+                                    details=entry_data.get('details', {})
+                                )
+                                history.entries.append(entry)
                         
                         self.machine_histories[machine_id] = history
                         
-                self.logger.info(f"Loaded history for {len(self.machine_histories)} machines")
+                total_entries = sum(len(h.entries) for h in self.machine_histories.values())
+                self.logger.info(f"Loaded history for {len(self.machine_histories)} machines ({total_entries} entries from last 7 days)")
             except Exception as e:
                 self.logger.warning(f"Failed to load machine history: {e}")
     
