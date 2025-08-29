@@ -163,7 +163,7 @@ class MonitoringConfig:
 
     # Continuous monitoring settings
     monitoring_interval_seconds: int = 120  # 2 minutes
-    inactive_alert_threshold_minutes: int = 10  # Alert after 10 minutes inactive
+    inactive_alert_threshold_minutes: int = 15  # Alert after 15 minutes inactive
 
 
 @dataclass
