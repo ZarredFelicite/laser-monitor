@@ -92,8 +92,8 @@ class AlertConfig:
 
     # SMS alert settings
     sms_alerts: bool = True
-    #sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61450746340', '+61411022714'])  # Phone numbers in E.164 format (e.g., +61412345678)
-    sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61432262789'])  # Phone numbers in E.164 format (e.g., +61412345678)
+    sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61450746340', '+61411022714'])  # Phone numbers in E.164 format (e.g., +61412345678)
+    #sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61432262789'])  # Phone numbers in E.164 format (e.g., +61412345678)
     twilio_account_sid: str = ""  # Set via environment variable
     twilio_auth_token: str = ""  # Set via environment variable
     twilio_from_number: str = ""  # Your Twilio phone number
