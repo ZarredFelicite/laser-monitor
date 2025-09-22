@@ -103,6 +103,16 @@ class LaserMonitorCLI:
             success = monitor.test_sms_alert()
             return 0 if success else 1
         
+        # Handle test active email flag
+        if getattr(args, 'test_active_email', False):
+            success = monitor.test_active_email_alert()
+            return 0 if success else 1
+        
+        # Handle test active SMS flag
+        if getattr(args, 'test_active_sms', False):
+            success = monitor.test_active_sms_alert()
+            return 0 if success else 1
+        
         continuous = getattr(args, 'continuous', False)
         success = monitor.run(continuous=continuous)
         return 0 if success else 1
@@ -526,6 +536,8 @@ Examples:
     monitor_parser.add_argument("--continuous", action="store_true", help="Enable continuous monitoring with 2-minute intervals")
     monitor_parser.add_argument("--test-email", action="store_true", help="Send a test email alert immediately and exit")
     monitor_parser.add_argument("--test-sms", action="store_true", help="Send a test SMS alert immediately and exit")
+    monitor_parser.add_argument("--test-active-email", action="store_true", help="Send a test active email alert immediately and exit")
+    monitor_parser.add_argument("--test-active-sms", action="store_true", help="Send a test active SMS alert immediately and exit")
     monitor_parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose debug logging (includes visual prompt selection details)")
     
     # Config command
