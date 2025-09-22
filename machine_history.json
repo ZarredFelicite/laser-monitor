@@ -1,0 +1,2716 @@
+{
+  "machine_0": {
+    "machine_id": "machine_0",
+    "last_active_time": "2025-08-28T22:56:52.227198",
+    "last_inactive_time": "2025-08-28T23:02:52.268941",
+    "entries": [
+      {
+        "timestamp": "2025-08-28T21:24:52.148702",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8831721445029624,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.23905529953917,
+            "std_brightness": 54.98459038451321,
+            "brightness_factor": 0.9227171658986175,
+            "mean_hue": 96.9942396313364,
+            "mean_saturation": 134.77822580645162,
+            "mean_value": 116.74193548387096,
+            "red_ratio": 0.5267857142857143,
+            "orange_ratio": 0.45714285714285713,
+            "decision_path": "working(0.527)+machine_on(0.457)",
+            "green_ratio": 0.45714285714285713
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:26:52.176201",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8664499506254114,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.15207373271889,
+            "std_brightness": 54.62348001942344,
+            "brightness_factor": 0.9224562211981566,
+            "mean_hue": 94.45218894009217,
+            "mean_saturation": 134.67223502304148,
+            "mean_value": 116.47983870967742,
+            "red_ratio": 0.5303571428571429,
+            "orange_ratio": 0.4392857142857143,
+            "decision_path": "working(0.530)+machine_on(0.439)",
+            "green_ratio": 0.4392857142857143
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:28:52.140887",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8962989230167874,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 75.92569124423963,
+            "std_brightness": 55.49075884251805,
+            "brightness_factor": 0.9277770737327189,
+            "mean_hue": 90.1463133640553,
+            "mean_saturation": 139.22062211981566,
+            "mean_value": 119.92626728110599,
+            "red_ratio": 0.5178571428571429,
+            "orange_ratio": 0.4660714285714286,
+            "decision_path": "working(0.518)+machine_on(0.466)",
+            "green_ratio": 0.4660714285714286
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:30:52.186875",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8849060247284396,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.26900921658986,
+            "std_brightness": 54.83506570869057,
+            "brightness_factor": 0.9228070276497695,
+            "mean_hue": 95.41417050691244,
+            "mean_saturation": 134.21947004608296,
+            "mean_value": 116.85541474654377,
+            "red_ratio": 0.5339285714285714,
+            "orange_ratio": 0.4589285714285714,
+            "decision_path": "working(0.534)+machine_on(0.459)",
+            "green_ratio": 0.4589285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:32:52.171495",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8668687335418037,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.30069124423963,
+            "std_brightness": 54.766108456479564,
+            "brightness_factor": 0.9229020737327188,
+            "mean_hue": 95.50633640552995,
+            "mean_saturation": 132.86693548387098,
+            "mean_value": 116.536866359447,
+            "red_ratio": 0.5392857142857143,
+            "orange_ratio": 0.4392857142857143,
+            "decision_path": "working(0.539)+machine_on(0.439)",
+            "green_ratio": 0.4392857142857143
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:34:52.165863",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8703240598255431,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.77534562211981,
+            "std_brightness": 54.50187279998211,
+            "brightness_factor": 0.9213260368663594,
+            "mean_hue": 96.39285714285714,
+            "mean_saturation": 136.12269585253455,
+            "mean_value": 116.54435483870968,
+            "red_ratio": 0.5303571428571429,
+            "orange_ratio": 0.4446428571428571,
+            "decision_path": "working(0.530)+machine_on(0.445)",
+            "green_ratio": 0.4446428571428571
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:36:52.178633",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.870281616194865,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.76036866359448,
+            "std_brightness": 54.39352636539724,
+            "brightness_factor": 0.9212811059907834,
+            "mean_hue": 96.73963133640552,
+            "mean_saturation": 133.41129032258064,
+            "mean_value": 116.23905529953917,
+            "red_ratio": 0.5339285714285714,
+            "orange_ratio": 0.4446428571428571,
+            "decision_path": "working(0.534)+machine_on(0.445)",
+            "green_ratio": 0.4446428571428571
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:38:52.174931",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8839148123765634,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.49769585253456,
+            "std_brightness": 54.90478766898766,
+            "brightness_factor": 0.9234930875576036,
+            "mean_hue": 97.55126728110599,
+            "mean_saturation": 135.860599078341,
+            "mean_value": 117.16301843317973,
+            "red_ratio": 0.5410714285714285,
+            "orange_ratio": 0.45714285714285713,
+            "decision_path": "working(0.541)+machine_on(0.457)",
+            "green_ratio": 0.45714285714285713
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:40:52.166044",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8785759792626727,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.9389400921659,
+            "std_brightness": 55.25285158336342,
+            "brightness_factor": 0.9248168202764977,
+            "mean_hue": 94.12269585253456,
+            "mean_saturation": 136.5495391705069,
+            "mean_value": 117.69988479262673,
+            "red_ratio": 0.5375,
+            "orange_ratio": 0.45,
+            "decision_path": "working(0.537)+machine_on(0.450)",
+            "green_ratio": 0.45
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:42:52.177791",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8756037936142198,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.47465437788019,
+            "std_brightness": 54.96112411560604,
+            "brightness_factor": 0.9234239631336405,
+            "mean_hue": 93.34274193548387,
+            "mean_saturation": 133.47235023041475,
+            "mean_value": 116.73041474654377,
+            "red_ratio": 0.525,
+            "orange_ratio": 0.44821428571428573,
+            "decision_path": "working(0.525)+machine_on(0.448)",
+            "green_ratio": 0.44821428571428573
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:44:52.185192",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8288800526662278,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 59.705069124423964,
+            "std_brightness": 46.797208078916384,
+            "brightness_factor": 0.8791152073732719,
+            "mean_hue": 92.03283410138249,
+            "mean_saturation": 118.41877880184332,
+            "mean_value": 85.86463133640552,
+            "red_ratio": 0.07321428571428572,
+            "orange_ratio": 0.4714285714285714,
+            "decision_path": "machine_on(0.471)",
+            "green_ratio": 0.4714285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:46:52.176881",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8817487142034232,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.8934331797235,
+            "std_brightness": 55.76492218894081,
+            "brightness_factor": 0.9246802995391704,
+            "mean_hue": 91.85195852534562,
+            "mean_saturation": 134.47465437788017,
+            "mean_value": 116.94700460829493,
+            "red_ratio": 0.5357142857142857,
+            "orange_ratio": 0.45357142857142857,
+            "decision_path": "working(0.536)+machine_on(0.454)",
+            "green_ratio": 0.45357142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:48:52.196364",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.871874012508229,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.90495391705069,
+            "std_brightness": 55.287181315880254,
+            "brightness_factor": 0.924714861751152,
+            "mean_hue": 93.18721198156682,
+            "mean_saturation": 133.86002304147465,
+            "mean_value": 117.29781105990783,
+            "red_ratio": 0.5392857142857143,
+            "orange_ratio": 0.44285714285714284,
+            "decision_path": "working(0.539)+machine_on(0.443)",
+            "green_ratio": 0.44285714285714284
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:50:52.177660",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8997267425115206,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.2655529953917,
+            "std_brightness": 54.977470144979584,
+            "brightness_factor": 0.922796658986175,
+            "mean_hue": 92.36002304147465,
+            "mean_saturation": 131.8991935483871,
+            "mean_value": 115.61751152073732,
+            "red_ratio": 0.5125,
+            "orange_ratio": 0.475,
+            "decision_path": "working(0.512)+machine_on(0.475)",
+            "green_ratio": 0.475
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:52:52.175594",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8724233870967741,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.51612903225806,
+            "std_brightness": 54.91601017038695,
+            "brightness_factor": 0.9235483870967741,
+            "mean_hue": 92.63248847926268,
+            "mean_saturation": 132.1820276497696,
+            "mean_value": 116.47119815668202,
+            "red_ratio": 0.5321428571428571,
+            "orange_ratio": 0.4446428571428571,
+            "decision_path": "working(0.532)+machine_on(0.445)",
+            "green_ratio": 0.4446428571428571
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:54:52.173853",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8303806945358788,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 60.23559907834101,
+            "std_brightness": 47.62234208251958,
+            "brightness_factor": 0.880706797235023,
+            "mean_hue": 91.13421658986175,
+            "mean_saturation": 120.93778801843318,
+            "mean_value": 86.52649769585254,
+            "red_ratio": 0.075,
+            "orange_ratio": 0.4714285714285714,
+            "decision_path": "machine_on(0.471)",
+            "green_ratio": 0.4714285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:56:52.165305",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8928213997695852,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.7258064516129,
+            "std_brightness": 55.45454964168891,
+            "brightness_factor": 0.9241774193548387,
+            "mean_hue": 90.48732718894009,
+            "mean_saturation": 134.44527649769586,
+            "mean_value": 116.53859447004608,
+            "red_ratio": 0.5232142857142857,
+            "orange_ratio": 0.4660714285714286,
+            "decision_path": "working(0.523)+machine_on(0.466)",
+            "green_ratio": 0.4660714285714286
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:58:52.178923",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8829703505595786,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.16877880184332,
+            "std_brightness": 55.090246172924914,
+            "brightness_factor": 0.9225063364055299,
+            "mean_hue": 92.6947004608295,
+            "mean_saturation": 129.80241935483872,
+            "mean_value": 114.625,
+            "red_ratio": 0.5196428571428572,
+            "orange_ratio": 0.45714285714285713,
+            "decision_path": "working(0.520)+machine_on(0.457)",
+            "green_ratio": 0.45714285714285713
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:00:52.166839",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8770344182027648,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.39804147465438,
+            "std_brightness": 55.19695544297163,
+            "brightness_factor": 0.9231941244239631,
+            "mean_hue": 93.44297235023042,
+            "mean_saturation": 131.5794930875576,
+            "mean_value": 115.68548387096774,
+            "red_ratio": 0.5232142857142857,
+            "orange_ratio": 0.45,
+            "decision_path": "working(0.523)+machine_on(0.450)",
+            "green_ratio": 0.45
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:02:52.173670",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8831853038594469,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.81854838709677,
+            "std_brightness": 55.48994098002406,
+            "brightness_factor": 0.9244556451612903,
+            "mean_hue": 94.03110599078342,
+            "mean_saturation": 132.9302995391705,
+            "mean_value": 116.44009216589862,
+            "red_ratio": 0.5267857142857143,
+            "orange_ratio": 0.45535714285714285,
+            "decision_path": "working(0.527)+machine_on(0.455)",
+            "green_ratio": 0.45535714285714285
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:04:52.184175",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8921083833936799,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.911866359447,
+            "std_brightness": 54.904292070483365,
+            "brightness_factor": 0.9217355990783409,
+            "mean_hue": 90.2471198156682,
+            "mean_saturation": 130.24942396313364,
+            "mean_value": 114.46370967741936,
+            "red_ratio": 0.5232142857142857,
+            "orange_ratio": 0.46785714285714286,
+            "decision_path": "working(0.523)+machine_on(0.468)",
+            "green_ratio": 0.46785714285714286
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:06:52.179915",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8709998930217248,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.01382488479263,
+            "std_brightness": 55.14005872461206,
+            "brightness_factor": 0.9220414746543778,
+            "mean_hue": 93.13594470046083,
+            "mean_saturation": 131.05357142857142,
+            "mean_value": 114.4660138248848,
+            "red_ratio": 0.4875,
+            "orange_ratio": 0.45714285714285713,
+            "decision_path": "working(0.487)+machine_on(0.457)",
+            "green_ratio": 0.45714285714285713
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:08:52.191477",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8856606957702434,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.95910138248848,
+            "std_brightness": 54.847127807074585,
+            "brightness_factor": 0.9218773041474654,
+            "mean_hue": 93.44700460829493,
+            "mean_saturation": 129.47119815668202,
+            "mean_value": 114.45334101382488,
+            "red_ratio": 0.5142857142857142,
+            "orange_ratio": 0.4607142857142857,
+            "decision_path": "working(0.514)+machine_on(0.461)",
+            "green_ratio": 0.4607142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:10:52.178439",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8852622428406846,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.8208525345622,
+            "std_brightness": 54.77104252918703,
+            "brightness_factor": 0.9214625576036866,
+            "mean_hue": 92.15956221198157,
+            "mean_saturation": 130.7102534562212,
+            "mean_value": 114.68260368663594,
+            "red_ratio": 0.5232142857142857,
+            "orange_ratio": 0.4607142857142857,
+            "decision_path": "working(0.523)+machine_on(0.461)",
+            "green_ratio": 0.4607142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:12:52.176037",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.880632915363726,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.92799539170507,
+            "std_brightness": 54.756635855164575,
+            "brightness_factor": 0.9217839861751151,
+            "mean_hue": 94.4758064516129,
+            "mean_saturation": 131.91129032258064,
+            "mean_value": 114.92453917050692,
+            "red_ratio": 0.5142857142857142,
+            "orange_ratio": 0.45535714285714285,
+            "decision_path": "working(0.514)+machine_on(0.455)",
+            "green_ratio": 0.45535714285714285
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:14:52.180557",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.7871995762014483,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 59.383640552995395,
+            "std_brightness": 46.39359322942293,
+            "brightness_factor": 0.8781509216589861,
+            "mean_hue": 93.80933179723502,
+            "mean_saturation": 118.29089861751152,
+            "mean_value": 85.40956221198157,
+            "red_ratio": 0.07142857142857142,
+            "orange_ratio": 0.44821428571428573,
+            "decision_path": "machine_on(0.448)",
+            "green_ratio": 0.44821428571428573
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:16:52.185248",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8906734374999999,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 75.125,
+            "std_brightness": 56.20908073868918,
+            "brightness_factor": 0.925375,
+            "mean_hue": 89.11866359447005,
+            "mean_saturation": 130.5950460829493,
+            "mean_value": 115.786866359447,
+            "red_ratio": 0.5321428571428571,
+            "orange_ratio": 0.4625,
+            "decision_path": "working(0.532)+machine_on(0.463)",
+            "green_ratio": 0.4625
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:18:52.175111",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8816004052830809,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.84158986175115,
+            "std_brightness": 55.455203811097874,
+            "brightness_factor": 0.9245247695852534,
+            "mean_hue": 89.02016129032258,
+            "mean_saturation": 132.29665898617512,
+            "mean_value": 116.3778801843318,
+            "red_ratio": 0.5214285714285715,
+            "orange_ratio": 0.45357142857142857,
+            "decision_path": "working(0.521)+machine_on(0.454)",
+            "green_ratio": 0.45357142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:20:52.171141",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8855092217330479,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.4786866359447,
+            "std_brightness": 55.309337526586894,
+            "brightness_factor": 0.9234360599078341,
+            "mean_hue": 92.36405529953917,
+            "mean_saturation": 133.7684331797235,
+            "mean_value": 116.01036866359448,
+            "red_ratio": 0.5232142857142857,
+            "orange_ratio": 0.4589285714285714,
+            "decision_path": "working(0.523)+machine_on(0.459)",
+            "green_ratio": 0.4589285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:22:52.187147",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8752317036290322,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 67.54435483870968,
+            "std_brightness": 47.6372295199345,
+            "brightness_factor": 0.902633064516129,
+            "mean_hue": 93.19815668202764,
+            "mean_saturation": 133.24884792626727,
+            "mean_value": 108.25518433179724,
+            "red_ratio": 0.5803571428571429,
+            "orange_ratio": 0.46964285714285714,
+            "decision_path": "working(0.580)+machine_on(0.470)",
+            "green_ratio": 0.46964285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:24:52.182326",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8086103645490453,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 59.18721198156682,
+            "std_brightness": 46.242910504751485,
+            "brightness_factor": 0.8775616359447004,
+            "mean_hue": 89.28225806451613,
+            "mean_saturation": 117.7160138248848,
+            "mean_value": 84.80990783410138,
+            "red_ratio": 0.07142857142857142,
+            "orange_ratio": 0.4607142857142857,
+            "decision_path": "machine_on(0.461)",
+            "green_ratio": 0.4607142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:26:52.183275",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8208154707044107,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 59.06912442396313,
+            "std_brightness": 45.889654925563384,
+            "brightness_factor": 0.8772073732718894,
+            "mean_hue": 91.14458525345623,
+            "mean_saturation": 116.74769585253456,
+            "mean_value": 84.55875576036867,
+            "red_ratio": 0.06607142857142857,
+            "orange_ratio": 0.46785714285714286,
+            "decision_path": "machine_on(0.468)",
+            "green_ratio": 0.46785714285714286
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:28:52.176526",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8906661660631995,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.55126728110599,
+            "std_brightness": 55.40284723969488,
+            "brightness_factor": 0.9236538018433179,
+            "mean_hue": 91.4089861751152,
+            "mean_saturation": 131.74884792626727,
+            "mean_value": 115.04147465437788,
+            "red_ratio": 0.5196428571428572,
+            "orange_ratio": 0.4642857142857143,
+            "decision_path": "working(0.520)+machine_on(0.464)",
+            "green_ratio": 0.4642857142857143
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:30:52.196969",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8810192406599735,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.06278801843318,
+            "std_brightness": 54.91629657117559,
+            "brightness_factor": 0.9221883640552995,
+            "mean_hue": 93.24539170506912,
+            "mean_saturation": 130.93260368663596,
+            "mean_value": 114.5241935483871,
+            "red_ratio": 0.525,
+            "orange_ratio": 0.45535714285714285,
+            "decision_path": "working(0.525)+machine_on(0.455)",
+            "green_ratio": 0.45535714285714285
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:32:52.175251",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8801865269091507,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.34735023041475,
+            "std_brightness": 54.94623234763162,
+            "brightness_factor": 0.9230420506912442,
+            "mean_hue": 92.41244239631337,
+            "mean_saturation": 130.3582949308756,
+            "mean_value": 114.54032258064517,
+            "red_ratio": 0.5125,
+            "orange_ratio": 0.45357142857142857,
+            "decision_path": "working(0.512)+machine_on(0.454)",
+            "green_ratio": 0.45357142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:34:52.171918",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8603005678077682,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 75.49251152073732,
+            "std_brightness": 55.66712032193244,
+            "brightness_factor": 0.9264775345622119,
+            "mean_hue": 90.7684331797235,
+            "mean_saturation": 131.52937788018434,
+            "mean_value": 116.72004608294931,
+            "red_ratio": 0.5107142857142857,
+            "orange_ratio": 0.42857142857142855,
+            "decision_path": "working(0.511)+machine_on(0.429)",
+            "green_ratio": 0.42857142857142855
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:36:52.191128",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8723940030447662,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.5057603686636,
+            "std_brightness": 55.09274722058468,
+            "brightness_factor": 0.9235172811059907,
+            "mean_hue": 90.92569124423963,
+            "mean_saturation": 131.3168202764977,
+            "mean_value": 115.13364055299539,
+            "red_ratio": 0.5125,
+            "orange_ratio": 0.4446428571428571,
+            "decision_path": "working(0.512)+machine_on(0.445)",
+            "green_ratio": 0.4446428571428571
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:38:52.189731",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8684370854591836,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 74.27246543778801,
+            "std_brightness": 54.823103268477354,
+            "brightness_factor": 0.922817396313364,
+            "mean_hue": 91.56912442396313,
+            "mean_saturation": 131.55184331797236,
+            "mean_value": 114.9971198156682,
+            "red_ratio": 0.5142857142857142,
+            "orange_ratio": 0.44107142857142856,
+            "decision_path": "working(0.514)+machine_on(0.441)",
+            "green_ratio": 0.44107142857142856
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:40:52.190847",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8759888115125081,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.45449308755761,
+            "std_brightness": 54.98977913490153,
+            "brightness_factor": 0.9203634792626727,
+            "mean_hue": 91.40783410138249,
+            "mean_saturation": 130.50921658986175,
+            "mean_value": 113.79896313364056,
+            "red_ratio": 0.5392857142857143,
+            "orange_ratio": 0.4517857142857143,
+            "decision_path": "working(0.539)+machine_on(0.452)",
+            "green_ratio": 0.4517857142857143
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:42:52.192373",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8660562181122449,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.4291474654378,
+            "std_brightness": 55.11984891938025,
+            "brightness_factor": 0.9202874423963133,
+            "mean_hue": 91.45910138248848,
+            "mean_saturation": 128.91589861751152,
+            "mean_value": 113.80587557603687,
+            "red_ratio": 0.5232142857142857,
+            "orange_ratio": 0.44107142857142856,
+            "decision_path": "working(0.523)+machine_on(0.441)",
+            "green_ratio": 0.44107142857142856
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:44:52.179938",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8610226176761027,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.39228110599079,
+            "std_brightness": 55.16501145477786,
+            "brightness_factor": 0.9201768433179723,
+            "mean_hue": 92.72523041474655,
+            "mean_saturation": 129.4078341013825,
+            "mean_value": 113.63248847926268,
+            "red_ratio": 0.5196428571428572,
+            "orange_ratio": 0.4357142857142857,
+            "decision_path": "working(0.520)+machine_on(0.436)",
+            "green_ratio": 0.4357142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:46:52.187157",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8725384504608295,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.9758064516129,
+            "std_brightness": 55.39025239005061,
+            "brightness_factor": 0.9219274193548387,
+            "mean_hue": 93.09216589861751,
+            "mean_saturation": 129.18375576036865,
+            "mean_value": 114.2897465437788,
+            "red_ratio": 0.5142857142857142,
+            "orange_ratio": 0.44642857142857145,
+            "decision_path": "working(0.514)+machine_on(0.446)",
+            "green_ratio": 0.44642857142857145
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:48:52.172277",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8654598049703752,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.80069124423963,
+            "std_brightness": 55.2453213356217,
+            "brightness_factor": 0.9214020737327189,
+            "mean_hue": 90.80990783410138,
+            "mean_saturation": 129.55357142857142,
+            "mean_value": 114.5,
+            "red_ratio": 0.5053571428571428,
+            "orange_ratio": 0.4392857142857143,
+            "decision_path": "working(0.505)+machine_on(0.439)",
+            "green_ratio": 0.4392857142857143
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:50:52.196186",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8689479067231731,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.2897465437788,
+            "std_brightness": 55.01293970894149,
+            "brightness_factor": 0.9198692396313364,
+            "mean_hue": 91.63479262672811,
+            "mean_saturation": 128.54320276497697,
+            "mean_value": 113.50403225806451,
+            "red_ratio": 0.5196428571428572,
+            "orange_ratio": 0.4446428571428571,
+            "decision_path": "working(0.520)+machine_on(0.445)",
+            "green_ratio": 0.4446428571428571
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:52:52.172166",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8657163265306121,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.30875576036867,
+            "std_brightness": 54.94509464584448,
+            "brightness_factor": 0.9199262672811059,
+            "mean_hue": 90.02880184331798,
+            "mean_saturation": 129.1889400921659,
+            "mean_value": 113.4942396313364,
+            "red_ratio": 0.5053571428571428,
+            "orange_ratio": 0.44107142857142856,
+            "decision_path": "working(0.505)+machine_on(0.441)",
+            "green_ratio": 0.44107142857142856
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:54:52.193678",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8611293408492429,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 73.4302995391705,
+            "std_brightness": 55.003254858886,
+            "brightness_factor": 0.9202908986175115,
+            "mean_hue": 92.46198156682027,
+            "mean_saturation": 129.3565668202765,
+            "mean_value": 113.66820276497695,
+            "red_ratio": 0.5107142857142857,
+            "orange_ratio": 0.4357142857142857,
+            "decision_path": "working(0.511)+machine_on(0.436)",
+            "green_ratio": 0.4357142857142857
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:56:52.227198",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9139639154048714,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 84.96255760368663,
+            "std_brightness": 85.79470112381127,
+            "brightness_factor": 0.9548876728110598,
+            "mean_hue": 38.556451612903224,
+            "mean_saturation": 201.0097926267281,
+            "mean_value": 133.29723502304148,
+            "red_ratio": 0.475,
+            "orange_ratio": 0.48214285714285715,
+            "decision_path": "working(0.475)+machine_on(0.482)",
+            "green_ratio": 0.48214285714285715
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:58:52.250833",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8031740783410138,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 46.37903225806452,
+            "std_brightness": 73.8220186389524,
+            "brightness_factor": 0.8391370967741936,
+            "mean_hue": 18.30990783410138,
+            "mean_saturation": 213.91877880184333,
+            "mean_value": 69.70218894009217,
+            "red_ratio": 0.0,
+            "orange_ratio": 0.4785714285714286,
+            "decision_path": "machine_on(0.479)",
+            "green_ratio": 0.4785714285714286
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T23:00:52.237627",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.7893615207373271,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 45.733870967741936,
+            "std_brightness": 73.14244611842098,
+            "brightness_factor": 0.8372016129032258,
+            "mean_hue": 20.704493087557605,
+            "mean_saturation": 216.72235023041475,
+            "mean_value": 69.61347926267281,
+            "red_ratio": 0.0,
+            "orange_ratio": 0.4714285714285714,
+            "decision_path": "machine_on(0.471)",
+            "green_ratio": 0.4714285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T23:02:52.268941",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.777330892034233,
+        "details": {
+          "bbox": [
+            1439,
+            446,
+            1467,
+            508
+          ],
+          "zone": "region_0",
+          "extras": {
+            "mean_brightness": 45.70852534562212,
+            "std_brightness": 73.08297519753839,
+            "brightness_factor": 0.8371255760368663,
+            "mean_hue": 20.286290322580644,
+            "mean_saturation": 213.63421658986175,
+            "mean_value": 69.463133640553,
+            "red_ratio": 0.0,
+            "orange_ratio": 0.4642857142857143,
+            "decision_path": "machine_on(0.464)",
+            "green_ratio": 0.4642857142857143
+          }
+        }
+      }
+    ]
+  },
+  "machine_1": {
+    "machine_id": "machine_1",
+    "last_active_time": "2025-08-28T23:02:52.269373",
+    "last_inactive_time": "2025-08-28T22:50:52.196610",
+    "entries": [
+      {
+        "timestamp": "2025-08-28T21:24:52.149355",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9810280612244897,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.67602040816327,
+            "std_brightness": 57.53326133353691,
+            "brightness_factor": 0.9810280612244897,
+            "mean_hue": 77.0765306122449,
+            "mean_saturation": 122.54591836734694,
+            "mean_value": 130.3469387755102,
+            "red_ratio": 0.7142857142857143,
+            "orange_ratio": 0.6349206349206349,
+            "decision_path": "working(0.714)+machine_on(0.635)",
+            "green_ratio": 0.6349206349206349
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:26:52.176865",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.979688775510204,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.2295918367347,
+            "std_brightness": 57.07320166954886,
+            "brightness_factor": 0.979688775510204,
+            "mean_hue": 80.39285714285714,
+            "mean_saturation": 123.76785714285714,
+            "mean_value": 129.30357142857142,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.6111111111111112,
+            "decision_path": "working(0.651)+machine_on(0.611)",
+            "green_ratio": 0.6111111111111112
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:28:52.141315",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8902091836734694,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 63.4030612244898,
+            "std_brightness": 20.684357463796864,
+            "brightness_factor": 0.8902091836734694,
+            "mean_hue": 70.94642857142857,
+            "mean_saturation": 95.22193877551021,
+            "mean_value": 80.01020408163265,
+            "red_ratio": 0.15079365079365079,
+            "orange_ratio": 0.5238095238095238,
+            "decision_path": "machine_on(0.524)",
+            "green_ratio": 0.5238095238095238
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:30:52.187602",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.981938775510204,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.9795918367347,
+            "std_brightness": 57.51880430618316,
+            "brightness_factor": 0.981938775510204,
+            "mean_hue": 80.9234693877551,
+            "mean_saturation": 123.66836734693878,
+            "mean_value": 130.60969387755102,
+            "red_ratio": 0.6825396825396826,
+            "orange_ratio": 0.6349206349206349,
+            "decision_path": "working(0.683)+machine_on(0.635)",
+            "green_ratio": 0.6349206349206349
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:32:52.171969",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.980079081632653,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.35969387755102,
+            "std_brightness": 57.524756941083886,
+            "brightness_factor": 0.980079081632653,
+            "mean_hue": 75.0484693877551,
+            "mean_saturation": 122.55357142857143,
+            "mean_value": 129.0,
+            "red_ratio": 0.6904761904761905,
+            "orange_ratio": 0.5952380952380952,
+            "decision_path": "working(0.690)+machine_on(0.595)",
+            "green_ratio": 0.5952380952380952
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:34:52.166255",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9788852040816325,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 92.96173469387755,
+            "std_brightness": 57.21955624958132,
+            "brightness_factor": 0.9788852040816325,
+            "mean_hue": 78.15051020408163,
+            "mean_saturation": 121.65816326530613,
+            "mean_value": 128.12244897959184,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.6031746031746031,
+            "decision_path": "working(0.651)+machine_on(0.603)",
+            "green_ratio": 0.6031746031746031
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:36:52.179320",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9800025510204081,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.33418367346938,
+            "std_brightness": 57.15248182201052,
+            "brightness_factor": 0.9800025510204081,
+            "mean_hue": 76.57397959183673,
+            "mean_saturation": 120.26020408163265,
+            "mean_value": 128.03061224489795,
+            "red_ratio": 0.626984126984127,
+            "orange_ratio": 0.6428571428571429,
+            "decision_path": "working(0.627)+machine_on(0.643)",
+            "green_ratio": 0.6428571428571429
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:38:52.175370",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9805688775510204,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.52295918367346,
+            "std_brightness": 57.34228132868385,
+            "brightness_factor": 0.9805688775510204,
+            "mean_hue": 74.09948979591837,
+            "mean_saturation": 124.49744897959184,
+            "mean_value": 129.01530612244898,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.6111111111111112,
+            "decision_path": "working(0.651)+machine_on(0.611)",
+            "green_ratio": 0.6111111111111112
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:40:52.166579",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.7646402858762552,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 78.46173469387755,
+            "std_brightness": 50.089446167820626,
+            "brightness_factor": 0.9353852040816326,
+            "mean_hue": 70.63265306122449,
+            "mean_saturation": 114.41836734693878,
+            "mean_value": 104.53316326530613,
+            "red_ratio": 0.31746031746031744,
+            "orange_ratio": 0.6666666666666666,
+            "decision_path": "working(0.317)+machine_on(0.667)",
+            "green_ratio": 0.6666666666666666
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:42:52.178212",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9832168367346938,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.40561224489795,
+            "std_brightness": 58.1879981763251,
+            "brightness_factor": 0.9832168367346938,
+            "mean_hue": 76.85714285714286,
+            "mean_saturation": 122.96683673469387,
+            "mean_value": 130.4362244897959,
+            "red_ratio": 0.6984126984126984,
+            "orange_ratio": 0.626984126984127,
+            "decision_path": "working(0.698)+machine_on(0.627)",
+            "green_ratio": 0.626984126984127
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:44:52.185653",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9816403061224489,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.88010204081633,
+            "std_brightness": 56.89946748423563,
+            "brightness_factor": 0.9816403061224489,
+            "mean_hue": 71.58418367346938,
+            "mean_saturation": 114.15306122448979,
+            "mean_value": 126.16326530612245,
+            "red_ratio": 0.6190476190476191,
+            "orange_ratio": 0.6031746031746031,
+            "decision_path": "working(0.619)+machine_on(0.603)",
+            "green_ratio": 0.6031746031746031
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:46:52.177887",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.7312534620991253,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 76.8954081632653,
+            "std_brightness": 47.76026205933401,
+            "brightness_factor": 0.9306862244897959,
+            "mean_hue": 74.95408163265306,
+            "mean_saturation": 111.79591836734694,
+            "mean_value": 101.82908163265306,
+            "red_ratio": 0.2857142857142857,
+            "orange_ratio": 0.5952380952380952,
+            "decision_path": "working(0.286)+machine_on(0.595)",
+            "green_ratio": 0.5952380952380952
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:48:52.197050",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9853367346938775,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.11224489795919,
+            "std_brightness": 57.90555869356149,
+            "brightness_factor": 0.9853367346938775,
+            "mean_hue": 66.1454081632653,
+            "mean_saturation": 114.1454081632653,
+            "mean_value": 127.7295918367347,
+            "red_ratio": 0.6190476190476191,
+            "orange_ratio": 0.5634920634920635,
+            "decision_path": "working(0.619)+machine_on(0.563)",
+            "green_ratio": 0.5634920634920635
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:50:52.178397",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9815178571428571,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.83928571428571,
+            "std_brightness": 57.14818892536298,
+            "brightness_factor": 0.9815178571428571,
+            "mean_hue": 63.204081632653065,
+            "mean_saturation": 117.44132653061224,
+            "mean_value": 126.98979591836735,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.5555555555555556,
+            "decision_path": "working(0.651)+machine_on(0.556)",
+            "green_ratio": 0.5555555555555556
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:52:52.176014",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.7569006316812439,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 78.33163265306122,
+            "std_brightness": 49.038065383109455,
+            "brightness_factor": 0.9349948979591836,
+            "mean_hue": 78.74234693877551,
+            "mean_saturation": 111.45918367346938,
+            "mean_value": 103.3061224489796,
+            "red_ratio": 0.30952380952380953,
+            "orange_ratio": 0.6111111111111112,
+            "decision_path": "working(0.310)+machine_on(0.611)",
+            "green_ratio": 0.6111111111111112
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:54:52.174335",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9887193877551019,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 96.23979591836735,
+            "std_brightness": 58.3381123714197,
+            "brightness_factor": 0.9887193877551019,
+            "mean_hue": 66.18877551020408,
+            "mean_saturation": 114.13775510204081,
+            "mean_value": 129.19387755102042,
+            "red_ratio": 0.6111111111111112,
+            "orange_ratio": 0.5634920634920635,
+            "decision_path": "working(0.611)+machine_on(0.563)",
+            "green_ratio": 0.5634920634920635
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:56:52.167280",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9856352040816325,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.21173469387755,
+            "std_brightness": 57.685402647667196,
+            "brightness_factor": 0.9856352040816325,
+            "mean_hue": 69.96683673469387,
+            "mean_saturation": 116.91071428571429,
+            "mean_value": 128.66071428571428,
+            "red_ratio": 0.626984126984127,
+            "orange_ratio": 0.6031746031746031,
+            "decision_path": "working(0.627)+machine_on(0.603)",
+            "green_ratio": 0.6031746031746031
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T21:58:52.179353",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9862474489795918,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.41581632653062,
+            "std_brightness": 57.85425967107965,
+            "brightness_factor": 0.9862474489795918,
+            "mean_hue": 66.05357142857143,
+            "mean_saturation": 116.9795918367347,
+            "mean_value": 128.4719387755102,
+            "red_ratio": 0.626984126984127,
+            "orange_ratio": 0.5793650793650794,
+            "decision_path": "working(0.627)+machine_on(0.579)",
+            "green_ratio": 0.5793650793650794
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:00:52.167279",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9864311224489795,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.47704081632654,
+            "std_brightness": 57.861988187043124,
+            "brightness_factor": 0.9864311224489795,
+            "mean_hue": 73.85204081632654,
+            "mean_saturation": 118.19897959183673,
+            "mean_value": 129.71683673469389,
+            "red_ratio": 0.6428571428571429,
+            "orange_ratio": 0.5952380952380952,
+            "decision_path": "working(0.643)+machine_on(0.595)",
+            "green_ratio": 0.5952380952380952
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:02:52.174466",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9850382653061224,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.01275510204081,
+            "std_brightness": 57.85323920306419,
+            "brightness_factor": 0.9850382653061224,
+            "mean_hue": 66.43877551020408,
+            "mean_saturation": 115.46173469387755,
+            "mean_value": 127.76785714285714,
+            "red_ratio": 0.6111111111111112,
+            "orange_ratio": 0.5714285714285714,
+            "decision_path": "working(0.611)+machine_on(0.571)",
+            "green_ratio": 0.5714285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:04:52.184598",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9902270408163265,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 96.74234693877551,
+            "std_brightness": 59.329651899298035,
+            "brightness_factor": 0.9902270408163265,
+            "mean_hue": 67.81122448979592,
+            "mean_saturation": 113.76275510204081,
+            "mean_value": 128.82397959183675,
+            "red_ratio": 0.6190476190476191,
+            "orange_ratio": 0.5634920634920635,
+            "decision_path": "working(0.619)+machine_on(0.563)",
+            "green_ratio": 0.5634920634920635
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:06:52.180575",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9842959183673469,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.76530612244898,
+            "std_brightness": 57.981665121074364,
+            "brightness_factor": 0.9842959183673469,
+            "mean_hue": 63.576530612244895,
+            "mean_saturation": 117.21683673469387,
+            "mean_value": 127.32142857142857,
+            "red_ratio": 0.6190476190476191,
+            "orange_ratio": 0.5714285714285714,
+            "decision_path": "working(0.619)+machine_on(0.571)",
+            "green_ratio": 0.5714285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:08:52.191965",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9828341836734693,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.27806122448979,
+            "std_brightness": 57.23645663097709,
+            "brightness_factor": 0.9828341836734693,
+            "mean_hue": 71.71938775510205,
+            "mean_saturation": 116.23214285714286,
+            "mean_value": 127.02295918367346,
+            "red_ratio": 0.6111111111111112,
+            "orange_ratio": 0.5952380952380952,
+            "decision_path": "working(0.611)+machine_on(0.595)",
+            "green_ratio": 0.5952380952380952
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:10:52.178900",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9840127551020408,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.67091836734694,
+            "std_brightness": 57.59961531877524,
+            "brightness_factor": 0.9840127551020408,
+            "mean_hue": 64.30357142857143,
+            "mean_saturation": 114.35969387755102,
+            "mean_value": 127.0688775510204,
+            "red_ratio": 0.6031746031746031,
+            "orange_ratio": 0.5952380952380952,
+            "decision_path": "working(0.603)+machine_on(0.595)",
+            "green_ratio": 0.5952380952380952
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:12:52.176724",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9818852040816326,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.96173469387755,
+            "std_brightness": 57.333041236262716,
+            "brightness_factor": 0.9818852040816326,
+            "mean_hue": 65.4234693877551,
+            "mean_saturation": 116.31632653061224,
+            "mean_value": 126.55357142857143,
+            "red_ratio": 0.626984126984127,
+            "orange_ratio": 0.5555555555555556,
+            "decision_path": "working(0.627)+machine_on(0.556)",
+            "green_ratio": 0.5555555555555556
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:14:52.180974",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9862780612244897,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.42602040816327,
+            "std_brightness": 58.08315323986206,
+            "brightness_factor": 0.9862780612244897,
+            "mean_hue": 69.15561224489795,
+            "mean_saturation": 116.45408163265306,
+            "mean_value": 128.73979591836735,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.5952380952380952,
+            "decision_path": "working(0.659)+machine_on(0.595)",
+            "green_ratio": 0.5952380952380952
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:16:52.186248",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.986890306122449,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.63010204081633,
+            "std_brightness": 59.09222653381984,
+            "brightness_factor": 0.986890306122449,
+            "mean_hue": 62.849489795918366,
+            "mean_saturation": 118.19642857142857,
+            "mean_value": 128.97704081632654,
+            "red_ratio": 0.6190476190476191,
+            "orange_ratio": 0.6349206349206349,
+            "decision_path": "working(0.619)+machine_on(0.635)",
+            "green_ratio": 0.6349206349206349
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:18:52.175793",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9871734693877551,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.72448979591837,
+            "std_brightness": 58.87244610557623,
+            "brightness_factor": 0.9871734693877551,
+            "mean_hue": 64.30357142857143,
+            "mean_saturation": 119.48724489795919,
+            "mean_value": 130.21683673469389,
+            "red_ratio": 0.6190476190476191,
+            "orange_ratio": 0.6190476190476191,
+            "decision_path": "working(0.619)+machine_on(0.619)",
+            "green_ratio": 0.6190476190476191
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:20:52.171564",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.985030612244898,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.01020408163265,
+            "std_brightness": 58.43830601722155,
+            "brightness_factor": 0.985030612244898,
+            "mean_hue": 73.43622448979592,
+            "mean_saturation": 119.26530612244898,
+            "mean_value": 129.72704081632654,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.6428571428571429,
+            "decision_path": "working(0.651)+machine_on(0.643)",
+            "green_ratio": 0.6428571428571429
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:22:52.187584",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9849923469387755,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.99744897959184,
+            "std_brightness": 58.51083532675936,
+            "brightness_factor": 0.9849923469387755,
+            "mean_hue": 63.17857142857143,
+            "mean_saturation": 115.375,
+            "mean_value": 127.36479591836735,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.5873015873015873,
+            "decision_path": "working(0.659)+machine_on(0.587)",
+            "green_ratio": 0.5873015873015873
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:24:52.182821",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9831173469387755,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.37244897959184,
+            "std_brightness": 58.288857199248085,
+            "brightness_factor": 0.9831173469387755,
+            "mean_hue": 64.22704081632654,
+            "mean_saturation": 116.65816326530613,
+            "mean_value": 126.9515306122449,
+            "red_ratio": 0.6111111111111112,
+            "orange_ratio": 0.626984126984127,
+            "decision_path": "working(0.611)+machine_on(0.627)",
+            "green_ratio": 0.626984126984127
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:26:52.183592",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9813418367346938,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.78061224489795,
+            "std_brightness": 57.96676415467687,
+            "brightness_factor": 0.9813418367346938,
+            "mean_hue": 66.24744897959184,
+            "mean_saturation": 114.25,
+            "mean_value": 125.67857142857143,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.6031746031746031,
+            "decision_path": "working(0.659)+machine_on(0.603)",
+            "green_ratio": 0.6031746031746031
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:28:52.177532",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9868061224489796,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.60204081632654,
+            "std_brightness": 59.195195922683325,
+            "brightness_factor": 0.9868061224489796,
+            "mean_hue": 66.01020408163265,
+            "mean_saturation": 118.08418367346938,
+            "mean_value": 128.98214285714286,
+            "red_ratio": 0.626984126984127,
+            "orange_ratio": 0.6349206349206349,
+            "decision_path": "working(0.627)+machine_on(0.635)",
+            "green_ratio": 0.6349206349206349
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:30:52.197653",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9816938775510203,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 93.89795918367346,
+            "std_brightness": 58.241359137664496,
+            "brightness_factor": 0.9816938775510203,
+            "mean_hue": 67.27295918367346,
+            "mean_saturation": 113.92857142857143,
+            "mean_value": 125.24234693877551,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.5793650793650794,
+            "decision_path": "working(0.659)+machine_on(0.579)",
+            "green_ratio": 0.5793650793650794
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:32:52.175673",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9827806122448979,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.26020408163265,
+            "std_brightness": 58.10698830394042,
+            "brightness_factor": 0.9827806122448979,
+            "mean_hue": 69.8265306122449,
+            "mean_saturation": 119.17602040816327,
+            "mean_value": 127.84948979591837,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.6507936507936508,
+            "decision_path": "working(0.659)+machine_on(0.651)",
+            "green_ratio": 0.6507936507936508
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:34:52.172375",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.987938775510204,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.9795918367347,
+            "std_brightness": 58.91670522810524,
+            "brightness_factor": 0.987938775510204,
+            "mean_hue": 66.44897959183673,
+            "mean_saturation": 121.88010204081633,
+            "mean_value": 132.1734693877551,
+            "red_ratio": 0.6904761904761905,
+            "orange_ratio": 0.6349206349206349,
+            "decision_path": "working(0.690)+machine_on(0.635)",
+            "green_ratio": 0.6349206349206349
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:36:52.191799",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9839974489795917,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.66581632653062,
+            "std_brightness": 58.14788548673554,
+            "brightness_factor": 0.9839974489795917,
+            "mean_hue": 75.33163265306122,
+            "mean_saturation": 120.52806122448979,
+            "mean_value": 129.46683673469389,
+            "red_ratio": 0.6666666666666666,
+            "orange_ratio": 0.6428571428571429,
+            "decision_path": "working(0.667)+machine_on(0.643)",
+            "green_ratio": 0.6428571428571429
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:38:52.190125",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9828954081632653,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.2984693877551,
+            "std_brightness": 57.683692366249964,
+            "brightness_factor": 0.9828954081632653,
+            "mean_hue": 63.90816326530612,
+            "mean_saturation": 120.75765306122449,
+            "mean_value": 129.3469387755102,
+            "red_ratio": 0.6746031746031746,
+            "orange_ratio": 0.6111111111111112,
+            "decision_path": "working(0.675)+machine_on(0.611)",
+            "green_ratio": 0.6111111111111112
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:40:52.191284",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.984517857142857,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.83928571428571,
+            "std_brightness": 58.38172403698448,
+            "brightness_factor": 0.984517857142857,
+            "mean_hue": 63.160714285714285,
+            "mean_saturation": 115.14030612244898,
+            "mean_value": 126.77551020408163,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.5634920634920635,
+            "decision_path": "working(0.651)+machine_on(0.563)",
+            "green_ratio": 0.5634920634920635
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:42:52.192790",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9825816326530612,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.1938775510204,
+            "std_brightness": 57.93524854300798,
+            "brightness_factor": 0.9825816326530612,
+            "mean_hue": 64.96683673469387,
+            "mean_saturation": 120.3545918367347,
+            "mean_value": 128.62755102040816,
+            "red_ratio": 0.6507936507936508,
+            "orange_ratio": 0.626984126984127,
+            "decision_path": "working(0.651)+machine_on(0.627)",
+            "green_ratio": 0.626984126984127
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:44:52.180624",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9824056122448979,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.13520408163265,
+            "std_brightness": 57.914606256241555,
+            "brightness_factor": 0.9824056122448979,
+            "mean_hue": 67.28571428571429,
+            "mean_saturation": 119.33418367346938,
+            "mean_value": 128.96173469387756,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.5714285714285714,
+            "decision_path": "working(0.659)+machine_on(0.571)",
+            "green_ratio": 0.5714285714285714
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:46:52.187561",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9836607142857142,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.55357142857143,
+            "std_brightness": 58.361751763270014,
+            "brightness_factor": 0.9836607142857142,
+            "mean_hue": 67.56377551020408,
+            "mean_saturation": 119.22448979591837,
+            "mean_value": 129.05357142857142,
+            "red_ratio": 0.6587301587301587,
+            "orange_ratio": 0.5873015873015873,
+            "decision_path": "working(0.659)+machine_on(0.587)",
+            "green_ratio": 0.5873015873015873
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:48:52.172673",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9843112244897958,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.7704081632653,
+            "std_brightness": 58.01638879852104,
+            "brightness_factor": 0.9843112244897958,
+            "mean_hue": 73.12244897959184,
+            "mean_saturation": 123.78061224489795,
+            "mean_value": 131.27295918367346,
+            "red_ratio": 0.7063492063492064,
+            "orange_ratio": 0.6190476190476191,
+            "decision_path": "working(0.706)+machine_on(0.619)",
+            "green_ratio": 0.6190476190476191
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:50:52.196610",
+        "status": "inactive",
+        "class_name": "machine_on_only",
+        "confidence": 0.8896581632653061,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 63.21938775510204,
+            "std_brightness": 21.46658132798212,
+            "brightness_factor": 0.8896581632653061,
+            "mean_hue": 74.94132653061224,
+            "mean_saturation": 97.78571428571429,
+            "mean_value": 80.27806122448979,
+            "red_ratio": 0.18253968253968253,
+            "orange_ratio": 0.5476190476190477,
+            "decision_path": "machine_on(0.548)",
+            "green_ratio": 0.5476190476190477
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:52:52.172848",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9849999999999999,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 95.0,
+            "std_brightness": 58.889597501405554,
+            "brightness_factor": 0.9849999999999999,
+            "mean_hue": 68.11479591836735,
+            "mean_saturation": 122.59948979591837,
+            "mean_value": 131.15816326530611,
+            "red_ratio": 0.6904761904761905,
+            "orange_ratio": 0.6507936507936508,
+            "decision_path": "working(0.690)+machine_on(0.651)",
+            "green_ratio": 0.6507936507936508
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:54:52.194109",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9823367346938775,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 94.11224489795919,
+            "std_brightness": 58.2009857993974,
+            "brightness_factor": 0.9823367346938775,
+            "mean_hue": 60.910714285714285,
+            "mean_saturation": 117.88010204081633,
+            "mean_value": 127.70918367346938,
+            "red_ratio": 0.6746031746031746,
+            "orange_ratio": 0.6349206349206349,
+            "decision_path": "working(0.675)+machine_on(0.635)",
+            "green_ratio": 0.6349206349206349
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:56:52.227605",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9297845602526723,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 118.47704081632654,
+            "std_brightness": 80.019382112662,
+            "brightness_factor": 1.0554311224489794,
+            "mean_hue": 38.451530612244895,
+            "mean_saturation": 100.78571428571429,
+            "mean_value": 141.5408163265306,
+            "red_ratio": 0.5317460317460317,
+            "orange_ratio": 0.38095238095238093,
+            "decision_path": "working(0.532)+machine_on(0.381)",
+            "green_ratio": 0.38095238095238093
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T22:58:52.251250",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.9245123299319729,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 116.48214285714286,
+            "std_brightness": 79.05848834300863,
+            "brightness_factor": 1.0494464285714287,
+            "mean_hue": 28.752551020408163,
+            "mean_saturation": 102.47448979591837,
+            "mean_value": 139.1887755102041,
+            "red_ratio": 0.5079365079365079,
+            "orange_ratio": 0.38095238095238093,
+            "decision_path": "working(0.508)+machine_on(0.381)",
+            "green_ratio": 0.38095238095238093
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T23:00:52.238048",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.8734672619047619,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 116.05357142857143,
+            "std_brightness": 78.89572482339054,
+            "brightness_factor": 1.0481607142857143,
+            "mean_hue": 25.783163265306122,
+            "mean_saturation": 98.58163265306122,
+            "mean_value": 138.26020408163265,
+            "red_ratio": 0.5158730158730159,
+            "orange_ratio": 0.3333333333333333,
+            "decision_path": "working(0.516)+machine_on(0.333)",
+            "green_ratio": 0.3333333333333333
+          }
+        }
+      },
+      {
+        "timestamp": "2025-08-28T23:02:52.269373",
+        "status": "active",
+        "class_name": "machine_active",
+        "confidence": 0.7290553126012309,
+        "details": {
+          "bbox": [
+            352,
+            495,
+            366,
+            523
+          ],
+          "zone": "region_1",
+          "extras": {
+            "mean_brightness": 72.86989795918367,
+            "std_brightness": 48.33277410878474,
+            "brightness_factor": 0.918609693877551,
+            "mean_hue": 47.16581632653061,
+            "mean_saturation": 108.24234693877551,
+            "mean_value": 92.58673469387755,
+            "red_ratio": 0.3968253968253968,
+            "orange_ratio": 0.3968253968253968,
+            "decision_path": "working(0.397)+machine_on(0.397)",
+            "green_ratio": 0.3968253968253968
+          }
+        }
+      }
+    ]
+  }
+}

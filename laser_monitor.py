@@ -4,7 +4,7 @@ Laser Monitor - Detection system with continuous monitoring support
 
 Supports both single-shot detection and continuous monitoring modes.
 Continuous mode captures frames every 2 minutes and tracks machine status history.
-Alerts when machines are inactive for more than 10 minutes.
+Alerts when machines are inactive for more than 15 minutes and when they become active again.
 """
 
 import warnings
@@ -205,13 +205,27 @@ class EmailAlertManager:
         except Exception as e:
             self.logger.warning(f"Failed to load .env file: {e}")
     
-    def update_machine_status(self, machine_id: str, current_status: str):
-        """Update machine status and reset alert flag when transitioning from inactive to active"""
+    def update_machine_status(self, machine_id: str, current_status: str, machine_history=None):
+        """Update machine status and send active alert when transitioning from inactive to active"""
         previous_status = self.last_machine_status.get(machine_id)
         self.last_machine_status[machine_id] = current_status
         
-        # If machine transitions from inactive to active, reset the alert flag
+        # If machine transitions from inactive to active, send active alert and reset flag
         if previous_status == "inactive" and current_status == "active":
+            # Send active alert if we previously sent an inactive alert
+            if self.alert_sent_for_current_inactive_period.get(machine_id, False):
+                inactive_duration_minutes = 0.0
+                if machine_history:
+                    duration = machine_history.get_inactive_duration()
+                    inactive_duration_minutes = duration.total_seconds() / 60
+                
+                # Send active alert
+                active_sent = self.send_active_alert(machine_id, inactive_duration_minutes)
+                if active_sent:
+                    self.logger.info(f"Active email alert sent for {machine_id}")
+                else:
+                    self.logger.warning(f"Failed to send active email alert for {machine_id}")
+            
             self.alert_sent_for_current_inactive_period[machine_id] = False
             self.logger.debug(f"Machine {machine_id} transitioned to active - reset alert flag")
     
@@ -311,12 +325,111 @@ class EmailAlertManager:
             
             <h3>Details:</h3>
             <ul>
-                <li>The machine has been inactive for more than 10 minutes</li>
+                <li>The machine has been inactive for more than 15 minutes</li>
                 <li>This indicates the laser may not be working properly</li>
                 <li>Please check the machine status and investigate if necessary</li>
             </ul>
             
             <p><em>This is an automated alert from the Laser Monitor system.</em></p>
+        </body>
+        </html>
+        """
+    
+    def send_active_alert(self, machine_id: str, inactive_duration_minutes: float, is_test: bool = False):
+        """Send email alert when machine becomes active again"""
+        if not is_test and not self.should_send_alert_for_active(machine_id):
+            self.logger.debug(f"Skipping active alert for {machine_id} - not configured or no previous inactive alert")
+            return False
+        
+        if not self.smtp_username or not self.smtp_password:
+            self.logger.error("Cannot send email alert - credentials not configured")
+            return False
+        
+        try:
+            # Create email message
+            msg = MIMEMultipart()
+            msg['From'] = self.config.alerts.email_from
+            msg['To'] = ', '.join(self.config.alerts.email_recipients)
+            
+            # Use different subject for test emails
+            if is_test:
+                msg['Subject'] = "🧪 TEST - Machine Active Again - " + self.config.alerts.email_subject
+            else:
+                msg['Subject'] = "✅ Machine Active Again - " + self.config.alerts.email_subject
+            
+            # Create email body
+            body = self._create_active_alert_body(machine_id, inactive_duration_minutes, is_test)
+            msg.attach(MIMEText(body, 'html'))
+            
+            # Send email
+            with smtplib.SMTP(self.config.alerts.smtp_server, self.config.alerts.smtp_port) as server:
+                server.starttls()
+                server.login(self.smtp_username, self.smtp_password)
+                server.send_message(msg)
+            
+            # Mark that we've sent an active alert for this machine
+            if not is_test:
+                self.alert_sent_for_current_inactive_period[machine_id] = False  # Reset for next cycle
+            
+            self.logger.info(f"Active email alert sent for {machine_id} (was inactive for {inactive_duration_minutes:.1f} minutes)")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to send active email alert for {machine_id}: {e}")
+            return False
+    
+    def should_send_alert_for_active(self, machine_id: str) -> bool:
+        """Check if we should send an active alert (only if we previously sent an inactive alert)"""
+        if not self.config.alerts.email_alerts:
+            return False
+        
+        if machine_id not in self.config.alerts.alert_machines:
+            return False
+        
+        # Only send active alert if we previously sent an inactive alert for this period
+        return self.alert_sent_for_current_inactive_period.get(machine_id, False)
+    
+    def _create_active_alert_body(self, machine_id: str, inactive_duration_minutes: float, is_test: bool = False) -> str:
+        """Create HTML email body for active alert"""
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Different styling and content for test emails
+        if is_test:
+            header_color = "#2196F3"  # Blue for test
+            header_text = "🧪 Laser Monitor Test - Machine Active"
+            status_text = "TEST - ACTIVE AGAIN"
+            test_notice = """
+            <div style="background-color: #e3f2fd; padding: 10px; border-left: 4px solid #2196F3; margin: 10px 0;">
+                <strong>🧪 This is a test email</strong><br>
+                This email was sent to test the active alert system.
+            </div>
+            """
+        else:
+            header_color = "#4caf50"  # Green for active alerts
+            header_text = "✅ Laser Monitor - Machine Active Again"
+            status_text = "ACTIVE AGAIN"
+            test_notice = ""
+        
+        return f"""
+        <html>
+        <body>
+            <h2 style="color: {header_color};">{header_text}</h2>
+            {test_notice}
+            <p><strong>Machine ID:</strong> {machine_id}</p>
+            <p><strong>Status:</strong> <span style="color: {header_color}; font-weight: bold;">{status_text}</span></p>
+            <p><strong>Previous Inactive Duration:</strong> {inactive_duration_minutes:.1f} minutes</p>
+            <p><strong>Alert Time:</strong> {current_time}</p>
+            
+            <div style="background-color: #e8f5e8; padding: 10px; border-left: 4px solid #4caf50; margin: 10px 0;">
+                <strong>✅ Good news!</strong><br>
+                The machine is now active again after being inactive for {inactive_duration_minutes:.1f} minutes.
+            </div>
+            
+            <hr>
+            <p style="font-size: 12px; color: #666;">
+                This alert was generated by the Laser Monitor system.<br>
+                Machine became active again at {current_time}.
+            </p>
         </body>
         </html>
         """
@@ -378,13 +491,27 @@ class SMSAlertManager:
         except Exception as e:
             self.logger.warning(f"Failed to load .env file: {e}")
     
-    def update_machine_status(self, machine_id: str, current_status: str):
-        """Update machine status and reset alert flag when transitioning from inactive to active"""
+    def update_machine_status(self, machine_id: str, current_status: str, machine_history=None):
+        """Update machine status and send active alert when transitioning from inactive to active"""
         previous_status = self.last_machine_status.get(machine_id)
         self.last_machine_status[machine_id] = current_status
         
-        # If machine transitions from inactive to active, reset the alert flag
+        # If machine transitions from inactive to active, send active alert and reset flag
         if previous_status == "inactive" and current_status == "active":
+            # Send active alert if we previously sent an inactive alert
+            if self.alert_sent_for_current_inactive_period.get(machine_id, False):
+                inactive_duration_minutes = 0.0
+                if machine_history:
+                    duration = machine_history.get_inactive_duration()
+                    inactive_duration_minutes = duration.total_seconds() / 60
+                
+                # Send active alert
+                active_sent = self.send_active_alert(machine_id, inactive_duration_minutes)
+                if active_sent:
+                    self.logger.info(f"Active SMS alert sent for {machine_id}")
+                else:
+                    self.logger.warning(f"Failed to send active SMS alert for {machine_id}")
+            
             self.alert_sent_for_current_inactive_period[machine_id] = False
             self.logger.debug(f"Machine {machine_id} transitioned to active - reset SMS alert flag")
     
@@ -457,6 +584,71 @@ class SMSAlertManager:
             return f"🧪 TEST ALERT: Laser Monitor SMS system is working correctly. Machine: {machine_id}"
         else:
             return f"🚨 LASER ALERT: {machine_id} has been inactive for {inactive_duration_minutes:.1f} minutes. Last active: {last_active_str}. Please check the machine."
+    
+    def send_active_alert(self, machine_id: str, inactive_duration_minutes: float, is_test: bool = False):
+        """Send SMS alert when machine becomes active again"""
+        if not is_test and not self.should_send_alert_for_active(machine_id):
+            self.logger.debug(f"Skipping active SMS alert for {machine_id} - not configured or no previous inactive alert")
+            return False
+        
+        if not self.client:
+            self.logger.error("Cannot send SMS alert - Twilio client not initialized")
+            return False
+        
+        if not self.config.alerts.sms_recipients:
+            self.logger.warning("No SMS recipients configured")
+            return False
+        
+        try:
+            # Create SMS message
+            message_body = self._create_active_alert_message(machine_id, inactive_duration_minutes, is_test)
+            
+            # Send to all recipients
+            sent_count = 0
+            for recipient in self.config.alerts.sms_recipients:
+                try:
+                    message = self.client.messages.create(
+                        body=message_body,
+                        from_=self.twilio_from_number,
+                        to=recipient
+                    )
+                    sent_count += 1
+                    self.logger.debug(f"SMS sent to {recipient}: {message.sid}")
+                except Exception as e:
+                    self.logger.error(f"Failed to send SMS to {recipient}: {e}")
+            
+            if sent_count > 0:
+                # Mark that we've sent an active alert for this machine
+                if not is_test:
+                    self.alert_sent_for_current_inactive_period[machine_id] = False  # Reset for next cycle
+                
+                self.logger.info(f"Active SMS alert sent for {machine_id} to {sent_count} recipients (was inactive for {inactive_duration_minutes:.1f} minutes)")
+                return True
+            else:
+                self.logger.error(f"Failed to send active SMS alert to any recipients for {machine_id}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Failed to send active SMS alert for {machine_id}: {e}")
+            return False
+    
+    def should_send_alert_for_active(self, machine_id: str) -> bool:
+        """Check if we should send an active SMS alert (only if we previously sent an inactive alert)"""
+        if not self.config.alerts.sms_alerts:
+            return False
+        
+        if machine_id not in self.config.alerts.alert_machines:
+            return False
+        
+        # Only send active alert if we previously sent an inactive alert for this period
+        return self.alert_sent_for_current_inactive_period.get(machine_id, False)
+    
+    def _create_active_alert_message(self, machine_id: str, inactive_duration_minutes: float, is_test: bool = False) -> str:
+        """Create SMS message for active alert"""
+        if is_test:
+            return f"🧪 TEST: Laser Monitor active alert system working. Machine: {machine_id}"
+        else:
+            return f"✅ LASER UPDATE: {machine_id} is now ACTIVE again after being inactive for {inactive_duration_minutes:.1f} minutes. 🎉"
 
 
 class LaserMonitor:
@@ -1258,8 +1450,9 @@ class LaserMonitor:
             )
             
             # Update alert managers with status change
-            self.email_alert_manager.update_machine_status(machine_id, "inactive")
-            self.sms_alert_manager.update_machine_status(machine_id, "inactive")
+            history = self.machine_histories.get(machine_id)
+            self.email_alert_manager.update_machine_status(machine_id, "inactive", history)
+            self.sms_alert_manager.update_machine_status(machine_id, "inactive", history)
         else:
             # Process each detection
             for i, detection in enumerate(detections):
@@ -1283,8 +1476,9 @@ class LaserMonitor:
                 )
                 
                 # Update alert managers with status change
-                self.email_alert_manager.update_machine_status(machine_id, status)
-                self.sms_alert_manager.update_machine_status(machine_id, status)
+                history = self.machine_histories[machine_id]
+                self.email_alert_manager.update_machine_status(machine_id, status, history)
+                self.sms_alert_manager.update_machine_status(machine_id, status, history)
                 
                 self.logger.info(f"Updated {machine_id}: {status} ({detection.class_name}, conf={detection.confidence:.3f})")
     
@@ -1581,6 +1775,103 @@ class LaserMonitor:
         except Exception as e:
             self.logger.error(f"Test SMS failed: {e}")
             print(f"❌ Test SMS failed: {e}")
+            print("   Check your .env file and Twilio configuration")
+            return False
+    
+    def test_active_email_alert(self) -> bool:
+        """Send a test active email alert immediately for testing purposes"""
+        try:
+            self.logger.info("🧪 Testing active email alert system...")
+            
+            # Check if email alerts are enabled
+            if not self.config.alerts.email_alerts:
+                self.logger.error("❌ Email alerts are disabled in configuration")
+                print("❌ Email alerts are disabled in configuration")
+                print("   Set alerts.email_alerts = True in your config")
+                return False
+            
+            # Check if machine_0 is in alert list
+            if 'machine_0' not in self.config.alerts.alert_machines:
+                self.logger.warning("⚠️  machine_0 is not in alert_machines list")
+                print("⚠️  machine_0 is not in alert_machines list")
+                print("   This test will still send an email, but real alerts won't be sent")
+            
+            test_inactive_duration = 15.5  # 15.5 minutes that it was inactive
+            
+            print(f"📧 Sending test active email alert...")
+            print(f"   Recipients: {', '.join(self.config.alerts.email_recipients)}")
+            print(f"   Test scenario: machine_0 became active after {test_inactive_duration} minutes inactive")
+            
+            # Send test active email
+            success = self.email_alert_manager.send_active_alert(
+                machine_id='machine_0',
+                inactive_duration_minutes=test_inactive_duration,
+                is_test=True
+            )
+            
+            if success:
+                print("✅ Test active email sent successfully!")
+                print("   Check your email for the alert message")
+                self.logger.info("✅ Test active email alert sent successfully")
+                return True
+            else:
+                print("❌ Failed to send test active email")
+                print("   Check your .env file and email configuration")
+                self.logger.error("❌ Failed to send test active email alert")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Test active email failed: {e}")
+            print(f"❌ Test active email failed: {e}")
+            print("   Check your .env file and email configuration")
+            return False
+    
+    def test_active_sms_alert(self) -> bool:
+        """Send a test active SMS alert immediately for testing purposes"""
+        try:
+            self.logger.info("🧪 Testing active SMS alert system...")
+            
+            # Check if SMS alerts are enabled
+            if not self.config.alerts.sms_alerts:
+                self.logger.error("❌ SMS alerts are disabled in configuration")
+                print("❌ SMS alerts are disabled in configuration")
+                print("   Set alerts.sms_alerts = True in your config")
+                return False
+            
+            # Check if machine_0 is in alert list
+            if 'machine_0' not in self.config.alerts.alert_machines:
+                self.logger.warning("⚠️  machine_0 is not in alert_machines list")
+                print("⚠️  machine_0 is not in alert_machines list")
+                print("   This test will still send an SMS, but real alerts won't be sent")
+            
+            test_inactive_duration = 15.5  # 15.5 minutes that it was inactive
+            
+            print(f"📱 Sending test active SMS alert...")
+            print(f"   Recipients: {', '.join(self.config.alerts.sms_recipients)}")
+            print(f"   Test scenario: machine_0 became active after {test_inactive_duration} minutes inactive")
+            
+            # Send test active SMS
+            success = self.sms_alert_manager.send_active_alert(
+                machine_id='machine_0',
+                inactive_duration_minutes=test_inactive_duration,
+                is_test=True
+            )
+            
+            if success:
+                print("✅ Test active SMS sent successfully!")
+                print("   Check your phone for the alert message")
+                self.logger.info("✅ Test active SMS alert sent successfully")
+                return True
+            else:
+                print("❌ Failed to send test active SMS")
+                print("   Check your .env file and Twilio configuration")
+                print("   Ensure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER are set")
+                self.logger.error("❌ Failed to send test active SMS alert")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Test active SMS failed: {e}")
+            print(f"❌ Test active SMS failed: {e}")
             print("   Check your .env file and Twilio configuration")
             return False
 
