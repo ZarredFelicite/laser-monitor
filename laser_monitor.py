@@ -180,9 +180,23 @@ class EmailAlertManager:
         # Get email credentials from environment variables
         self.smtp_username = os.getenv('LASER_MONITOR_EMAIL_USER', self.config.alerts.email_username)
         self.smtp_password = os.getenv('LASER_MONITOR_EMAIL_PASS', self.config.alerts.email_password)
+        # Get email recipients from environment (fallback to config for backward compatibility)
+        self.recipients = self._parse_list_env('LASER_MONITOR_EMAIL_RECIPIENTS', self.config.alerts.email_recipients)
         
         if not self.smtp_username or not self.smtp_password:
             self.logger.warning("Email credentials not configured. Create a .env file with LASER_MONITOR_EMAIL_USER and LASER_MONITOR_EMAIL_PASS variables.")
+
+    @staticmethod
+    def _parse_list_env(var_name: str, fallback: Optional[List[str]] = None) -> List[str]:
+        raw = os.getenv(var_name, "").strip()
+        if raw:
+            # Split on commas, semicolons, or whitespace and strip blanks
+            items = []
+            for sep in [',', ';', '\n', '\t', ' ']:
+                raw = raw.replace(sep, ',')
+            items = [x.strip() for x in raw.split(',') if x.strip()]
+            return items
+        return list(fallback or [])
     
     def _load_env_file(self):
         """Load environment variables from .env file"""
@@ -257,7 +271,7 @@ class EmailAlertManager:
             # Create email message
             msg = MIMEMultipart()
             msg['From'] = self.config.alerts.email_from
-            msg['To'] = ', '.join(self.config.alerts.email_recipients)
+            msg['To'] = ', '.join(self.recipients)
             
             # Use different subject for test emails
             if is_test:
@@ -349,7 +363,7 @@ class EmailAlertManager:
             # Create email message
             msg = MIMEMultipart()
             msg['From'] = self.config.alerts.email_from
-            msg['To'] = ', '.join(self.config.alerts.email_recipients)
+            msg['To'] = ', '.join(self.recipients)
             
             # Use different subject for test emails
             if is_test:
@@ -454,6 +468,8 @@ class SMSAlertManager:
         self.account_sid = os.getenv('TWILIO_ACCOUNT_SID', self.config.alerts.twilio_account_sid)
         self.auth_token = os.getenv('TWILIO_AUTH_TOKEN', self.config.alerts.twilio_auth_token)
         self.from_number = os.getenv('TWILIO_FROM_NUMBER', self.config.alerts.twilio_from_number)
+        # Get SMS recipients from environment (fallback to config for backward compatibility)
+        self.recipients = self._parse_list_env('LASER_MONITOR_SMS_RECIPIENTS', self.config.alerts.sms_recipients)
         
         if not self.account_sid or not self.auth_token or not self.from_number:
             self.logger.warning("Twilio credentials not configured. Create a .env file with TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER variables.")
@@ -490,6 +506,15 @@ class SMSAlertManager:
             self.logger.warning("python-dotenv not installed. Install with: pip install python-dotenv")
         except Exception as e:
             self.logger.warning(f"Failed to load .env file: {e}")
+
+    @staticmethod
+    def _parse_list_env(var_name: str, fallback: Optional[List[str]] = None) -> List[str]:
+        raw = os.getenv(var_name, "").strip()
+        if raw:
+            for sep in [',', ';', '\n', '\t', ' ']:
+                raw = raw.replace(sep, ',')
+            return [x.strip() for x in raw.split(',') if x.strip()]
+        return list(fallback or [])
     
     def update_machine_status(self, machine_id: str, current_status: str, machine_history=None):
         """Update machine status and send active alert when transitioning from inactive to active"""
@@ -539,7 +564,7 @@ class SMSAlertManager:
             self.logger.error("Cannot send SMS alert - Twilio client not initialized")
             return False
         
-        if not self.config.alerts.sms_recipients:
+        if not self.recipients:
             self.logger.warning("No SMS recipients configured")
             return False
         
@@ -549,7 +574,7 @@ class SMSAlertManager:
             
             # Send SMS to all recipients
             sent_count = 0
-            for recipient in self.config.alerts.sms_recipients:
+            for recipient in self.recipients:
                 try:
                     message = self.client.messages.create(
                         body=message_body,
@@ -595,7 +620,7 @@ class SMSAlertManager:
             self.logger.error("Cannot send SMS alert - Twilio client not initialized")
             return False
         
-        if not self.config.alerts.sms_recipients:
+        if not self.recipients:
             self.logger.warning("No SMS recipients configured")
             return False
         
@@ -605,11 +630,11 @@ class SMSAlertManager:
             
             # Send to all recipients
             sent_count = 0
-            for recipient in self.config.alerts.sms_recipients:
+            for recipient in self.recipients:
                 try:
                     message = self.client.messages.create(
                         body=message_body,
-                        from_=self.twilio_from_number,
+                        from_=self.from_number,
                         to=recipient
                     )
                     sent_count += 1
@@ -1677,7 +1702,7 @@ class LaserMonitor:
             test_duration = 15.5  # 15.5 minutes inactive
             
             print(f"📧 Sending test email alert...")
-            print(f"   Recipients: {', '.join(self.config.alerts.email_recipients)}")
+            print(f"   Recipients: {', '.join(self.email_alert_manager.recipients) if getattr(self.email_alert_manager, 'recipients', None) else '(none)'}")
             print(f"   Test scenario: machine_0 inactive for {test_duration} minutes")
             print(f"   Last active: {test_last_active.strftime('%Y-%m-%d %H:%M:%S')}")
             
@@ -1739,7 +1764,7 @@ class LaserMonitor:
             test_duration = 15.5  # 15.5 minutes inactive
             
             print(f"📱 Sending test SMS alert...")
-            print(f"   Recipients: {', '.join(self.config.alerts.sms_recipients)}")
+            print(f"   Recipients: {', '.join(self.sms_alert_manager.recipients) if getattr(self.sms_alert_manager, 'recipients', None) else '(none)'}")
             print(f"   Test scenario: machine_0 inactive for {test_duration} minutes")
             print(f"   Last active: {test_last_active.strftime('%Y-%m-%d %H:%M:%S')}")
             
@@ -1799,7 +1824,7 @@ class LaserMonitor:
             test_inactive_duration = 15.5  # 15.5 minutes that it was inactive
             
             print(f"📧 Sending test active email alert...")
-            print(f"   Recipients: {', '.join(self.config.alerts.email_recipients)}")
+            print(f"   Recipients: {', '.join(self.email_alert_manager.recipients) if getattr(self.email_alert_manager, 'recipients', None) else '(none)'}")
             print(f"   Test scenario: machine_0 became active after {test_inactive_duration} minutes inactive")
             
             # Send test active email
@@ -1847,7 +1872,7 @@ class LaserMonitor:
             test_inactive_duration = 15.5  # 15.5 minutes that it was inactive
             
             print(f"📱 Sending test active SMS alert...")
-            print(f"   Recipients: {', '.join(self.config.alerts.sms_recipients)}")
+            print(f"   Recipients: {', '.join(self.sms_alert_manager.recipients) if getattr(self.sms_alert_manager, 'recipients', None) else '(none)'}")
             print(f"   Test scenario: machine_0 became active after {test_inactive_duration} minutes inactive")
             
             # Send test active SMS

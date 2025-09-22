@@ -1,0 +1,3 @@
+[console_scripts]
+laser-monitor = enhanced_monitor:main
+setup-yoloe = setup_yoloe:main

@@ -4,6 +4,14 @@ applyTo: '**'
 
 # AGENTS.md — Instructions & README summary for agents
 
+## Update (2025-09-23 - Move recipients to .env)
+
+- Moved alert recipients out of code config: email_recipients and sms_recipients now read from .env.
+- New env vars: LASER_MONITOR_EMAIL_RECIPIENTS (CSV/space/semicolon separated), LASER_MONITOR_SMS_RECIPIENTS (E.164, CSV/space/semicolon separated).
+- Config defaults for recipients are now empty; existing values still work as fallback if env not set.
+- Added .env.example with placeholders for email, SMS recipients, and credentials.
+- Updated test alert output to print recipients from env-driven managers.
+
 ## Update (2025-08-29 - Machine History Retention Policy)
 
 - Changed machine history retention from "last 20/50 entries" to "last 7 days" time-based retention.

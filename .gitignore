@@ -3,3 +3,4 @@ __pycache__
 .env
 output
 laser_monitor.log
+AGENTS.md

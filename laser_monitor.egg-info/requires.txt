@@ -1,0 +1,29 @@
+opencv-python>=4.6.0
+pyxdg
+numpy>=1.23.0
+pyyaml>=5.3.1
+requests>=2.23.0
+pygame>=2.0.0
+setuptools<81
+schedule>=1.1.0
+python-dotenv>=0.19.0
+configparser>=5.2.0
+flask>=3.0.0
+twilio>=8.0.0
+
+[:sys_platform == "darwin"]
+liblo
+numpy<2.0.0
+
+[ai]
+ultralytics>=8.3.0
+huggingface-hub>=0.16.0
+clip@ git+https://github.com/ultralytics/CLIP.git@a6238961f9fab312d99c7709f8c7485b3f9a9b50
+ftfy>=6.3.1
+regex>=2024.11.6
+wcwidth>=0.2.13
+
+[dev]
+pytest>=6.0.0
+black>=21.0.0
+flake8>=3.9.0

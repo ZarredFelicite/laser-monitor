@@ -53,7 +53,7 @@ class DetectionConfig:
 
     # Indicator light composite mode (splits bbox into subregions for red/orange detection)
     indicator_mode: bool = True  # Enable specialized top-third red / middle-third orange logic
-    red_activation_ratio: float = 0.25  # Minimum fraction of top-third pixels matching red to activate
+    red_activation_ratio: float = 0.35  # Minimum fraction of top-third pixels matching red to activate
 
     # New orange activation ratio replacing deprecated green_activation_ratio
     orange_activation_ratio: float = 0.25  # Minimum fraction of middle-third pixels matching orange to activate
@@ -82,7 +82,8 @@ class AlertConfig:
 
     # Email alert settings
     email_alerts: bool = True
-    email_recipients: List[str] = field(default_factory=lambda: ['zarredf@hiltonmfg.com.au', 'zarred.f@gmail.com', 'ravit@hiltonmfg.com.au'])
+    # Email recipients moved to .env (LASER_MONITOR_EMAIL_RECIPIENTS)
+    email_recipients: List[str] = field(default_factory=list)
     email_smtp_server: str = "smtp.gmail.com"
     email_smtp_port: int = 587
     email_username: str = ""  # Set via environment variable
@@ -92,8 +93,8 @@ class AlertConfig:
 
     # SMS alert settings
     sms_alerts: bool = True
-    #sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61450746340', '+61411022714'])  # Phone numbers in E.164 format (e.g., +61412345678)
-    sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61432262789'])  # Phone numbers in E.164 format (e.g., +61412345678)
+    # SMS recipients moved to .env (LASER_MONITOR_SMS_RECIPIENTS); numbers must be E.164 format
+    sms_recipients: List[str] = field(default_factory=list)
     twilio_account_sid: str = ""  # Set via environment variable
     twilio_auth_token: str = ""  # Set via environment variable
     twilio_from_number: str = ""  # Your Twilio phone number
