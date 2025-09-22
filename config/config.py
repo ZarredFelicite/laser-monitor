@@ -53,7 +53,7 @@ class DetectionConfig:
 
     # Indicator light composite mode (splits bbox into subregions for red/orange detection)
     indicator_mode: bool = True  # Enable specialized top-third red / middle-third orange logic
-    red_activation_ratio: float = 0.25  # Minimum fraction of top-third pixels matching red to activate
+    red_activation_ratio: float = 0.35  # Minimum fraction of top-third pixels matching red to activate
 
     # New orange activation ratio replacing deprecated green_activation_ratio
     orange_activation_ratio: float = 0.25  # Minimum fraction of middle-third pixels matching orange to activate
@@ -92,7 +92,7 @@ class AlertConfig:
 
     # SMS alert settings
     sms_alerts: bool = True
-    sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61450746340', '+61411022714'])  # Phone numbers in E.164 format (e.g., +61412345678)
+    sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61450746340'])  # Phone numbers in E.164 format (e.g., +61412345678)
     #sms_recipients: List[str] = field(default_factory=lambda: ['+61434876717', '+61432262789'])  # Phone numbers in E.164 format (e.g., +61412345678)
     twilio_account_sid: str = ""  # Set via environment variable
     twilio_auth_token: str = ""  # Set via environment variable
