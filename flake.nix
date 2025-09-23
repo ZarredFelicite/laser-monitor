@@ -57,6 +57,7 @@
         ];
 
         python = pkgs.python312.withPackages (ps: with ps; [
+          pytest
           # Minimal base packages - most will be managed by uv
         ]);
 
@@ -107,7 +108,7 @@
 
             # Keep venv in-sync with pyproject.toml
             echo "Syncing dependencies with uv..."
-            uv sync
+            uv sync --extra dev
 
             source .venv/bin/activate
 

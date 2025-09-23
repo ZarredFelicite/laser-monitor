@@ -6,3 +6,5 @@ laser_monitor.egg-info/dependency_links.txt
 laser_monitor.egg-info/entry_points.txt
 laser_monitor.egg-info/requires.txt
 laser_monitor.egg-info/top_level.txt
+tests/test.config.py
+tests/test_detections.py
