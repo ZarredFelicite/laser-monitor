@@ -53,10 +53,10 @@ class DetectionConfig:
 
     # Indicator light composite mode (splits bbox into subregions for red/orange detection)
     indicator_mode: bool = True  # Enable specialized top-third red / middle-third orange logic
-    red_activation_ratio: float = 0.35  # Minimum fraction of top-third pixels matching red to activate
+    red_activation_ratio: float = 0.4  # Minimum fraction of top-third pixels matching red to activate
 
     # New orange activation ratio replacing deprecated green_activation_ratio
-    orange_activation_ratio: float = 0.25  # Minimum fraction of middle-third pixels matching orange to activate
+    orange_activation_ratio: float = 0.55  # Minimum fraction of middle-third pixels matching orange to activate
 
     # Deprecated (backward compatibility) — if user config sets this, it will be mapped to orange_activation_ratio
     green_activation_ratio: Optional[float] = None

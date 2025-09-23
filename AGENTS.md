@@ -4,6 +4,12 @@ applyTo: '**'
 
 # AGENTS.md — Instructions & README summary for agents
 
+## Update (2025-09-23 - Pytest warning config + test fix)
+
+- Fixed pytest warning filter to avoid importing `tests` during config parsing. Switched `filterwarnings` to a module-based rule (`default:::tests.test_detections`).
+- Moved `MachineExpectationWarning` to top-level in `tests/test_detections.py` (and corrected indentation) so tests can import/use it cleanly.
+- Resolves `ModuleNotFoundError: No module named 'tests'` during pytest startup and ensures expectation warnings display as intended.
+
 ## Update (2025-09-23 - Move recipients to .env)
 
 - Moved alert recipients out of code config: email_recipients and sms_recipients now read from .env.

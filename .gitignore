@@ -2,5 +2,6 @@ __pycache__
 .venv
 .env
 output
+tests/output
 laser_monitor.log
 AGENTS.md

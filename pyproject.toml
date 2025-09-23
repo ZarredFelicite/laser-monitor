@@ -68,6 +68,12 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+addopts = ["-q", "--assert=plain", "--tb=no"]
+filterwarnings = [
+  "ignore::Warning",
+  # Show warnings originating from tests.test_detections (avoid importing classes during config parsing)
+  "default:::tests.test_detections"
+]
 
 [tool.uv]
 environments = ["sys_platform == 'linux'"]

@@ -1153,7 +1153,21 @@ class LaserMonitor:
                 debug_msg += f", red_ratio={extras['red_ratio']:.3f}, orange_ratio={extras['orange_ratio']:.3f}"
             self.logger.debug(debug_msg)
             
-            # Only return detection if confidence meets threshold
+            # In bbox mode, always emit a detection for the provided ROI so we
+            # can classify the machine state directly from the region without
+            # applying a confidence gate. For AI modes, keep thresholding.
+            if self.config.detection.mode == "bbox":
+                return DetectionResult(
+                    timestamp="",
+                    confidence=confidence,
+                    bbox=bbox,
+                    class_name=class_name,
+                    laser_status=laser_status,
+                    zone_name=region_name,
+                    extras=extras
+                )
+
+            # For non-bbox (AI) modes, honor the confidence threshold
             if confidence >= self.config.detection.confidence_threshold:
                 return DetectionResult(
                     timestamp="",  # Will be set by caller
@@ -1164,7 +1178,7 @@ class LaserMonitor:
                     zone_name=region_name,
                     extras=extras
                 )
-            
+
             return None
             
         except Exception as e:
@@ -1195,14 +1209,11 @@ class LaserMonitor:
         
         return None
     
-    def save_frame(self, frame: np.ndarray, detections: List[DetectionResult]) -> tuple[str, Optional[str]]:
-        """Save frame with detection annotations"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"detection_{timestamp}.jpg"
-        filepath = self.screenshots_dir / filename
+    def draw_detection_overlays(self, frame: np.ndarray, detections: List[DetectionResult]) -> np.ndarray:
+        """Draw detection overlays on frame and return annotated frame"""
+        annotated_frame = frame.copy()
         
         # Draw detections on frame
-        annotated_frame = frame.copy()
         for detection in detections:
             x1, y1, x2, y2 = [int(coord) for coord in detection.bbox]
             
@@ -1278,6 +1289,17 @@ class LaserMonitor:
         # Thresholds info
         cv2.putText(annotated_frame, f"Thresholds: R={self.config.detection.red_activation_ratio:.2f} O={self.config.detection.orange_activation_ratio:.2f}", 
                    (10, status_y_start + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+        
+        return annotated_frame
+    
+    def save_frame(self, frame: np.ndarray, detections: List[DetectionResult]) -> tuple[str, Optional[str]]:
+        """Save frame with detection annotations"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"detection_{timestamp}.jpg"
+        filepath = self.screenshots_dir / filename
+        
+        # Use helper method to draw overlays
+        annotated_frame = self.draw_detection_overlays(frame, detections)
         
         # Save annotated frame
         cv2.imwrite(str(filepath), annotated_frame)
