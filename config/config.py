@@ -53,14 +53,8 @@ class DetectionConfig:
 
     # Indicator light composite mode (splits bbox into subregions for red/orange detection)
     indicator_mode: bool = True  # Enable specialized top-third red / middle-third orange logic
-    red_activation_ratio: float = 0.4  # Minimum fraction of top-third pixels matching red to activate
-
-    # New orange activation ratio replacing deprecated green_activation_ratio
-    orange_activation_ratio: float = 0.55  # Minimum fraction of middle-third pixels matching orange to activate
-
-    # Deprecated (backward compatibility) — if user config sets this, it will be mapped to orange_activation_ratio
-    green_activation_ratio: Optional[float] = None
-
+    red_activation_ratio: float = 0.5  # Minimum fraction of top-third pixels matching red to activate
+    orange_activation_ratio: float = 0.53  # Minimum fraction of middle-third pixels matching orange to activate
     # Hue range configurables (HSV H channel 0-179) for fine tuning
     red_hue_low_max: int = 10     # Inclusive upper bound for low-end red wrap
     red_hue_high_min: int = 170   # Inclusive lower bound for high-end red wrap
@@ -70,6 +64,11 @@ class DetectionConfig:
     indicator_min_saturation: int = 90  # Minimum saturation for a pixel to be considered colored
     indicator_min_value: int = 90  # Minimum value (brightness) for a pixel to be considered
     indicator_blur_ksize: int = 3  # Median blur kernel size to denoise before analysis
+
+    # Brightness threshold mode (alternative to color-based detection)
+    use_brightness_threshold: bool = True  # Enable brightness-based detection instead of color analysis
+    brightness_threshold_ratio: float = 1.4  # Multiplier for bottom-third brightness to determine active threshold
+    brightness_active_ratio: float = 0.65  # Minimum fraction of ROI pixels above threshold to be considered active
 
 
 @dataclass

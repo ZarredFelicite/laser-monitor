@@ -1,6 +1,6 @@
 {
   "machines": {
-    "machine_0": "machine_off",
-    "machine_1": "machine_off"
+    "machine_0": "machine_on_only",
+    "machine_1": "machine_on_only"
   }
 }
