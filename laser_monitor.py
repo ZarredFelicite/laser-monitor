@@ -992,8 +992,104 @@ class LaserMonitor:
             laser_status = "normal"
             decision_path = "none"
             
+            # Brightness threshold mode (alternative to color-based detection)
+            if getattr(self.config.detection, 'use_brightness_threshold', False):
+                # Divide ROI into thirds like color-based detection
+                h, w = gray.shape
+                third = max(1, h // 3)
+                top_region = gray[0:third, :]
+                mid_region = gray[third:2*third, :]
+                bottom_region = gray[2*third:, :]
+                
+                # Calculate brightness for each region
+                top_brightness = float(np.mean(top_region)) if top_region.size > 0 else mean_brightness
+                mid_brightness = float(np.mean(mid_region)) if mid_region.size > 0 else mean_brightness
+                bottom_brightness = float(np.mean(bottom_region)) if bottom_region.size > 0 else mean_brightness
+                
+                # Calculate thresholds for top and middle regions based on bottom third
+                top_threshold = bottom_brightness * self.config.detection.brightness_threshold_ratio
+                mid_threshold = bottom_brightness * self.config.detection.brightness_threshold_ratio
+                
+                # Count bright pixels in each region
+                top_bright_pixels = np.sum(top_region > top_threshold) if top_region.size > 0 else 0
+                mid_bright_pixels = np.sum(mid_region > mid_threshold) if mid_region.size > 0 else 0
+                
+                top_bright_ratio = top_bright_pixels / top_region.size if top_region.size > 0 else 0.0
+                mid_bright_ratio = mid_bright_pixels / mid_region.size if mid_region.size > 0 else 0.0
+                
+                # Determine activation status for each region
+                top_active = top_bright_ratio >= self.config.detection.brightness_active_ratio  # Working indicator
+                mid_active = mid_bright_ratio >= self.config.detection.brightness_active_ratio  # Machine on indicator
+                
+                decision_parts = []
+                if top_active:
+                    decision_parts.append(f"working({top_bright_ratio:.3f})")  # top = working
+                if mid_active:
+                    decision_parts.append(f"machine_on({mid_bright_ratio:.3f})")  # middle = machine on
+                if not decision_parts:
+                    decision_parts.append("machine_off")
+                
+                # Calculate brightness factor (higher brightness = more confident the light is on)
+                brightness_factor = 0.7 + 0.6 * min(1.0, mean_brightness / 200.0)
+                
+                # Determine composite class & derive confidence (same logic as color-based)
+                if top_active and mid_active:
+                    class_name = "machine_active"  # Both on: machine is on AND working
+                    # Confidence based on how far above threshold both ratios are
+                    top_excess = max(0, top_bright_ratio - self.config.detection.brightness_active_ratio)
+                    mid_excess = max(0, mid_bright_ratio - self.config.detection.brightness_active_ratio)
+                    top_conf = 0.5 + min(0.5, top_excess / (2 * self.config.detection.brightness_active_ratio))
+                    mid_conf = 0.5 + min(0.5, mid_excess / (2 * self.config.detection.brightness_active_ratio))
+                    base_confidence = (top_conf + mid_conf) / 2.0
+                    confidence = min(1.0, base_confidence * brightness_factor)
+                    laser_status = "active"  # Machine is actively working
+                elif top_active:
+                    class_name = "machine_working_only"  # Top only: working but machine may not be fully on
+                    top_excess = max(0, top_bright_ratio - self.config.detection.brightness_active_ratio)
+                    base_confidence = 0.5 + min(0.5, top_excess / (2 * self.config.detection.brightness_active_ratio))
+                    confidence = min(1.0, base_confidence * brightness_factor)
+                    laser_status = "inactive"  # Not fully active without middle (machine on)
+                elif mid_active:
+                    class_name = "machine_on_only"  # Middle only: machine is on but not working
+                    mid_excess = max(0, mid_bright_ratio - self.config.detection.brightness_active_ratio)
+                    base_confidence = 0.5 + min(0.5, mid_excess / (2 * self.config.detection.brightness_active_ratio))
+                    confidence = min(1.0, base_confidence * brightness_factor)
+                    laser_status = "inactive"  # Not active - machine on but not working
+                else:
+                    class_name = "machine_off"  # Both off: machine is completely off
+                    # Confidence based on how far below threshold we are
+                    top_deficit = max(0, self.config.detection.brightness_active_ratio - top_bright_ratio)
+                    mid_deficit = max(0, self.config.detection.brightness_active_ratio - mid_bright_ratio)
+                    # Lower confidence when we're far below threshold
+                    top_conf = max(0.1, 0.5 - top_deficit / self.config.detection.brightness_active_ratio)
+                    mid_conf = max(0.1, 0.5 - mid_deficit / self.config.detection.brightness_active_ratio)
+                    base_confidence = min(top_conf, mid_conf)  # Use the lower confidence
+                    # For inactive states, lower brightness should increase confidence (dark = more likely off)
+                    inverse_brightness_factor = 2.0 - brightness_factor  # 1.3 becomes 0.7, 0.7 becomes 1.3
+                    confidence = min(1.0, max(0.1, base_confidence * inverse_brightness_factor))
+                    laser_status = "inactive"
+                
+                decision_path = "+".join(decision_parts)
+                
+                extras = {
+                    "mean_brightness": mean_brightness,
+                    "std_brightness": std_brightness,
+                    "brightness_factor": brightness_factor,
+                    "top_brightness": top_brightness,
+                    "mid_brightness": mid_brightness,
+                    "bottom_brightness": bottom_brightness,
+                    "top_threshold": top_threshold,
+                    "mid_threshold": mid_threshold,
+                    "top_bright_ratio": top_bright_ratio,
+                    "mid_bright_ratio": mid_bright_ratio,
+                    "decision_path": decision_path,
+                    "mean_hue": mean_hue,
+                    "mean_saturation": mean_saturation,
+                    "mean_value": mean_value
+                }
+                
             # Specialized indicator composite mode
-            if getattr(self.config.detection, 'indicator_mode', False):
+            elif getattr(self.config.detection, 'indicator_mode', False):
                 # Optional denoise
                 if self.config.detection.indicator_blur_ksize > 1:
                     try:
@@ -1233,27 +1329,47 @@ class LaserMonitor:
             cv2.putText(annotated_frame, label, (x1, y1 - 10), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
             
-            # Draw red/orange scores if available in extras
+            # Draw detection-specific scores based on detection mode
             if hasattr(detection, 'extras') and detection.extras:
-                red_ratio = detection.extras.get('red_ratio', 0)
-                orange_ratio = detection.extras.get('orange_ratio', 0)
-                brightness = detection.extras.get('mean_brightness', 0)
-                brightness_factor = detection.extras.get('brightness_factor', 1.0)
-                
-                # Red score
-                red_text = f"Red: {red_ratio:.3f}"
-                cv2.putText(annotated_frame, red_text, (x1, y1 - 30), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
-                
-                # Orange score
-                orange_text = f"Org: {orange_ratio:.3f}"
-                cv2.putText(annotated_frame, orange_text, (x1, y1 - 45), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255), 1)
-                
-                # Brightness info
-                bright_text = f"Br: {brightness:.0f} ({brightness_factor:.2f}x)"
-                cv2.putText(annotated_frame, bright_text, (x1, y1 - 60), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+                # Check if using brightness threshold mode
+                if getattr(self.config.detection, 'use_brightness_threshold', False):
+                    # Brightness threshold mode - show per-region brightness values
+                    top_brightness = detection.extras.get('top_brightness', 0)
+                    mid_brightness = detection.extras.get('mid_brightness', 0)
+                    top_bright_ratio = detection.extras.get('top_bright_ratio', 0)
+                    mid_bright_ratio = detection.extras.get('mid_bright_ratio', 0)
+                    
+                    # Top region brightness (working indicator)
+                    top_text = f"Top: {top_brightness:.1f} ({top_bright_ratio:.3f})"
+                    cv2.putText(annotated_frame, top_text, (x1, y1 - 30), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+                    
+                    # Middle region brightness (machine on indicator)
+                    mid_text = f"Mid: {mid_brightness:.1f} ({mid_bright_ratio:.3f})"
+                    cv2.putText(annotated_frame, mid_text, (x1, y1 - 45), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+                    
+                else:
+                    # Color-based mode - show red/orange ratios
+                    red_ratio = detection.extras.get('red_ratio', 0)
+                    orange_ratio = detection.extras.get('orange_ratio', 0)
+                    brightness = detection.extras.get('mean_brightness', 0)
+                    brightness_factor = detection.extras.get('brightness_factor', 1.0)
+                    
+                    # Red score
+                    red_text = f"Red: {red_ratio:.3f}"
+                    cv2.putText(annotated_frame, red_text, (x1, y1 - 30), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+                    
+                    # Orange score
+                    orange_text = f"Org: {orange_ratio:.3f}"
+                    cv2.putText(annotated_frame, orange_text, (x1, y1 - 45), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255), 1)
+                    
+                    # Brightness info
+                    bright_text = f"Br: {brightness:.0f} ({brightness_factor:.2f}x)"
+                    cv2.putText(annotated_frame, bright_text, (x1, y1 - 60), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
         
         # Add status information in bottom left corner
         height, width = annotated_frame.shape[:2]
@@ -1286,9 +1402,23 @@ class LaserMonitor:
         cv2.putText(annotated_frame, f"Status: {overall_status}", (10, status_y_start + 40), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, status_color, 2)
         
-        # Thresholds info
-        cv2.putText(annotated_frame, f"Thresholds: R={self.config.detection.red_activation_ratio:.2f} O={self.config.detection.orange_activation_ratio:.2f}", 
-                   (10, status_y_start + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+        # Thresholds info - show different info based on detection mode
+        if getattr(self.config.detection, 'use_brightness_threshold', False):
+            # Brightness threshold mode - show per-region threshold info
+            # Get brightness values from first detection if available
+            if detections and hasattr(detections[0], 'extras') and detections[0].extras:
+                bottom_brightness = detections[0].extras.get('bottom_brightness', 0)
+                top_threshold = detections[0].extras.get('top_threshold', 0)
+                mid_threshold = detections[0].extras.get('mid_threshold', 0)
+                threshold_text = f"Bottom: {bottom_brightness:.1f} | Thresholds: T={top_threshold:.1f} M={mid_threshold:.1f} | Active: {self.config.detection.brightness_active_ratio:.2f}"
+            else:
+                threshold_text = f"Brightness mode | Ratio: {self.config.detection.brightness_threshold_ratio:.1f}x | Active: {self.config.detection.brightness_active_ratio:.2f}"
+            cv2.putText(annotated_frame, threshold_text, 
+                       (10, status_y_start + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+        else:
+            # Color-based mode - show red/orange thresholds
+            cv2.putText(annotated_frame, f"Thresholds: R={self.config.detection.red_activation_ratio:.2f} O={self.config.detection.orange_activation_ratio:.2f}", 
+                       (10, status_y_start + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
         
         return annotated_frame
     

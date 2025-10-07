@@ -4,6 +4,20 @@ applyTo: '**'
 
 # AGENTS.md — Instructions & README summary for agents
 
+## Update (2025-10-08 - Brightness Threshold Detection Mode)
+
+- Added brightness-based detection as an alternative to color-based detection for laser indicator monitoring.
+- New config options in DetectionConfig: `use_brightness_threshold`, `brightness_threshold_ratio`, `brightness_active_ratio`.
+- Brightness detection analyzes top/middle thirds separately (like color mode) using bottom third as reference baseline.
+- Top third brightness = working indicator, middle third = machine on indicator, same logic as color-based detection.
+- Threshold calculated as `bottom_brightness * brightness_threshold_ratio` for each region independently.
+- Updated debug output: brightness mode shows per-region brightness values and ratios instead of red/orange ratios.
+- Bottom stats region shows brightness threshold info (bottom brightness, threshold levels, active ratio) in brightness mode.
+- Added test configurations and scripts: `test_brightness.config.py`, `test_brightness_detection.py`, `run_brightness_tests.py`.
+- Example configuration provided in `example_brightness_config.py` for easy setup.
+- Brightness detection provides more consistent results across varying lighting conditions compared to color-based detection.
+- Test results: 58.3% success rate vs 41.7% for color-based detection on sample images.
+
 ## Update (2025-09-23 - Pytest warning config + test fix)
 
 - Fixed pytest warning filter to avoid importing `tests` during config parsing. Switched `filterwarnings` to a module-based rule (`default:::tests.test_detections`).
