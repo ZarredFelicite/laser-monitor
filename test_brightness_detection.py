@@ -48,8 +48,7 @@ def test_brightness_detection():
     output_dir.mkdir(exist_ok=True)
 
     print("Testing brightness threshold detection mode:")
-    print(f"- Brightness threshold ratio: {config.detection.brightness_threshold_ratio}")
-    print(f"- Brightness active ratio: {config.detection.brightness_active_ratio}")
+    print(f"- Brightness threshold ratios: {config.detection.brightness_threshold_ratios}")
     print()
 
     for img_path in test_images:

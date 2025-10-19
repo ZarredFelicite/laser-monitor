@@ -7,4 +7,6 @@ laser_monitor.egg-info/entry_points.txt
 laser_monitor.egg-info/requires.txt
 laser_monitor.egg-info/top_level.txt
 tests/test.config.py
+tests/test1.config.py
+tests/test_brightness.config.py
 tests/test_detections.py
