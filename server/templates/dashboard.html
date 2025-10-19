@@ -367,6 +367,51 @@
             font-weight: bold;
             margin-left: 10px;
         }
+        
+        .image-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        
+        .nav-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        
+        .nav-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        #image-counter {
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .image-timestamp {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -422,7 +467,13 @@
     <div class="dashboard-grid">
         <!-- Latest Detection Image -->
         <div class="card">
-            <h2>📸 Latest Detection</h2>
+            <h2>📸 Detection Images</h2>
+            <div class="image-navigation">
+                <button id="prev-image" class="nav-button" onclick="navigateImage(-1)" disabled>◀ Previous</button>
+                <span id="image-counter">1 / 1</span>
+                <button id="next-image" class="nav-button" onclick="navigateImage(1)" disabled>Next ▶</button>
+            </div>
+            <div id="image-timestamp" class="image-timestamp"></div>
             <div class="image-container">
                 <img id="detection-image" class="detection-image" src="/api/latest-image" alt="Latest Detection" onerror="handleImageError(this)">
             </div>
@@ -478,27 +529,84 @@
 
     <script>
         let machineCharts = {};
+        let imageList = [];
+        let currentImageIndex = 0;
         
         function refreshDashboard() {
             console.log('Refreshing dashboard...');
             loadStats();
-            refreshImage();
+            loadImages();
+        }
+        
+        function loadImages() {
+            fetch('/api/images')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.images && data.images.length > 0) {
+                        imageList = data.images;
+                        currentImageIndex = 0;  // Start with most recent
+                        displayImage(currentImageIndex);
+                        updateNavigationButtons();
+                    } else {
+                        handleImageError();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading images:', error);
+                    handleImageError();
+                });
+        }
+        
+        function displayImage(index) {
+            if (imageList.length === 0) return;
+            
+            const img = document.getElementById('detection-image');
+            const errorDiv = document.getElementById('image-error');
+            const counterDiv = document.getElementById('image-counter');
+            const timestampDiv = document.getElementById('image-timestamp');
+            
+            const imageData = imageList[index];
+            img.src = imageData.url;
+            img.style.display = 'block';
+            errorDiv.style.display = 'none';
+            
+            counterDiv.textContent = `${index + 1} / ${imageList.length}`;
+            
+            // Format timestamp
+            const timestamp = new Date(imageData.timestamp);
+            timestampDiv.textContent = timestamp.toLocaleString();
+        }
+        
+        function navigateImage(direction) {
+            currentImageIndex += direction;
+            
+            // Clamp to valid range
+            if (currentImageIndex < 0) currentImageIndex = 0;
+            if (currentImageIndex >= imageList.length) currentImageIndex = imageList.length - 1;
+            
+            displayImage(currentImageIndex);
+            updateNavigationButtons();
+        }
+        
+        function updateNavigationButtons() {
+            const prevButton = document.getElementById('prev-image');
+            const nextButton = document.getElementById('next-image');
+            
+            prevButton.disabled = (currentImageIndex === 0);
+            nextButton.disabled = (currentImageIndex === imageList.length - 1);
         }
         
         function refreshImage() {
-            const img = document.getElementById('detection-image');
-            const errorDiv = document.getElementById('image-error');
-            
-            // Add timestamp to force refresh
-            const timestamp = new Date().getTime();
-            img.src = `/api/latest-image?t=${timestamp}`;
-            errorDiv.style.display = 'none';
+            loadImages();
         }
         
         function handleImageError(img) {
             console.log('Image load error');
             document.getElementById('image-error').style.display = 'block';
-            img.style.display = 'none';
+            const imgElement = document.getElementById('detection-image');
+            if (imgElement) {
+                imgElement.style.display = 'none';
+            }
         }
         
         function loadStats() {
@@ -785,6 +893,15 @@
                 closeSettings();
             }
         }
+        
+        // Keyboard navigation for images
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') {
+                navigateImage(-1);
+            } else if (event.key === 'ArrowRight') {
+                navigateImage(1);
+            }
+        });
         
         // Load initial data
         document.addEventListener('DOMContentLoaded', function() {

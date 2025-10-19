@@ -29,9 +29,47 @@ def dashboard():
     """Main dashboard page"""
     return render_template('dashboard.html')
 
+@app.route('/api/images')
+def get_images():
+    """Get list of available images"""
+    try:
+        image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))
+        if not image_files:
+            return jsonify({'images': [], 'total': 0})
+        
+        # Sort by modification time (newest first), limit to last 15
+        image_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+        image_files = image_files[:15]
+        
+        images = []
+        for img in image_files:
+            images.append({
+                'filename': img.name,
+                'timestamp': datetime.fromtimestamp(img.stat().st_mtime).isoformat(),
+                'url': f'/api/image/{img.name}'
+            })
+        
+        return jsonify({'images': images, 'total': len(images)})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/image/<filename>')
+def get_image(filename):
+    """Serve a specific detection image by filename"""
+    try:
+        image_path = SCREENSHOTS_DIR / filename
+        if not image_path.exists():
+            return jsonify({'error': 'Image not found'}), 404
+        
+        return send_file(image_path, mimetype='image/jpeg')
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/latest-image')
 def latest_image():
-    """Serve the latest detection image"""
+    """Serve the latest detection image (legacy endpoint)"""
     try:
         # Find the most recent detection image
         image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))

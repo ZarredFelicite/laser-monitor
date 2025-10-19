@@ -11,6 +11,8 @@ Real-time laser cutter monitoring system using indicator light detection (bright
   - 15-minute startup grace period (no alerts on program start for pre-existing inactivity)
   - Pause/resume via web dashboard
 - **Web Dashboard**: Flask server with live stats, 7-day activity charts, settings management
+  - Image history: last 15 images (30 minutes) with navigation arrows
+  - Keyboard navigation: Left/Right arrow keys
 - **Config**: .env for recipients/credentials, Python dataclass configs
 - **History**: 7-day retention, auto-cleanup
 - **Optimization**: grid search tool for finding optimal threshold ratios
