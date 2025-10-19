@@ -249,12 +249,18 @@ class EmailAlertManager:
     def _check_notifications_paused(self) -> bool:
         """Check if notifications are paused via settings file"""
         try:
-            settings_file = Path(self.config.output.output_dir) / 'notification_settings.json'
-            if settings_file.exists():
-                import json
-                with open(settings_file, 'r') as f:
-                    settings = json.load(f)
-                    return settings.get('notifications_paused', False)
+            import json
+            # Check both output directory and server directory
+            locations = [
+                Path(self.config.output.output_dir) / 'notification_settings.json',
+                Path(__file__).parent / 'server' / 'notification_settings.json'
+            ]
+            
+            for settings_file in locations:
+                if settings_file.exists():
+                    with open(settings_file, 'r') as f:
+                        settings = json.load(f)
+                        return settings.get('notifications_paused', False)
         except Exception as e:
             self.logger.debug(f"Could not check notification pause state: {e}")
         return False
@@ -573,12 +579,18 @@ class SMSAlertManager:
     def _check_notifications_paused(self) -> bool:
         """Check if notifications are paused via settings file"""
         try:
-            settings_file = Path(self.config.output.output_dir) / 'notification_settings.json'
-            if settings_file.exists():
-                import json
-                with open(settings_file, 'r') as f:
-                    settings = json.load(f)
-                    return settings.get('notifications_paused', False)
+            import json
+            # Check both output directory and server directory
+            locations = [
+                Path(self.config.output.output_dir) / 'notification_settings.json',
+                Path(__file__).parent / 'server' / 'notification_settings.json'
+            ]
+            
+            for settings_file in locations:
+                if settings_file.exists():
+                    with open(settings_file, 'r') as f:
+                        settings = json.load(f)
+                        return settings.get('notifications_paused', False)
         except Exception as e:
             self.logger.debug(f"Could not check notification pause state: {e}")
         return False
