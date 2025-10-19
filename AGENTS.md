@@ -35,7 +35,7 @@ cd server && python app.py  # http://localhost:5000
 - `.env.example` — alert recipients/credentials template
 - `server/app.py` — Flask web dashboard backend
 - `server/templates/dashboard.html` — Web UI with settings
-- `output/notification_settings.json` — pause state persistence
+- `server/notification_settings.json` — pause state persistence (writable)
 
 ## Environment Variables
 - `LASER_MONITOR_EMAIL_RECIPIENTS` — CSV/space/semicolon separated

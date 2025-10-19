@@ -18,7 +18,10 @@ app = Flask(__name__)
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 SCREENSHOTS_DIR = OUTPUT_DIR / "screenshots"
 HISTORY_FILE = OUTPUT_DIR / "machine_history.json"
-SETTINGS_FILE = OUTPUT_DIR / "notification_settings.json"
+
+# Store settings in server directory (writable)
+SERVER_DIR = Path(__file__).parent
+SETTINGS_FILE = SERVER_DIR / "notification_settings.json"
 ENV_FILE = Path(__file__).parent.parent / ".env"
 
 @app.route('/')
