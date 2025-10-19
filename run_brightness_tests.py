@@ -76,8 +76,7 @@ def run_brightness_tests():
     warnings_count = 0
 
     print("Testing brightness threshold detection against expected results:")
-    print(f"- Brightness threshold ratio: {monitor.config.detection.brightness_threshold_ratio}")
-    print(f"- Brightness active ratio: {monitor.config.detection.brightness_active_ratio}")
+    print(f"- Brightness threshold ratios: {monitor.config.detection.brightness_threshold_ratios}")
     print()
 
     for img_path in test_images:

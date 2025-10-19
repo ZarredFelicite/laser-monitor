@@ -8,8 +8,9 @@ import os
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from flask import Flask, render_template, jsonify, send_file
+from flask import Flask, render_template, jsonify, send_file, request
 import glob
+from dotenv import load_dotenv, set_key, find_dotenv
 
 app = Flask(__name__)
 
@@ -17,6 +18,8 @@ app = Flask(__name__)
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 SCREENSHOTS_DIR = OUTPUT_DIR / "screenshots"
 HISTORY_FILE = OUTPUT_DIR / "machine_history.json"
+SETTINGS_FILE = OUTPUT_DIR / "notification_settings.json"
+ENV_FILE = Path(__file__).parent.parent / ".env"
 
 @app.route('/')
 def dashboard():
@@ -173,7 +176,7 @@ def calculate_overall_uptime(history_data, hours_back=1):
     return overall_uptime, machine_uptimes
 
 def generate_hourly_activity(history_data):
-    """Generate hourly activity data for the last 24 hours per machine"""
+    """Generate hourly activity data for the last 7 days per machine"""
     now = datetime.now()
     current_hour = now.replace(minute=0, second=0, microsecond=0)
     machine_hourly_data = {}
@@ -182,11 +185,11 @@ def generate_hourly_activity(history_data):
     for machine_id in history_data.keys():
         machine_hourly_data[machine_id] = []
     
-    # Create 24 hourly buckets aligned to actual hour boundaries
-    for i in range(24):
-        hour_start = current_hour - timedelta(hours=23-i)
-        # For the current hour (i == 23), use current time as end
-        if i == 23:
+    # Create 168 hourly buckets (7 days * 24 hours)
+    for i in range(168):
+        hour_start = current_hour - timedelta(hours=167-i)
+        # For the current hour (i == 167), use current time as end
+        if i == 167:
             hour_end = now
         else:
             hour_end = hour_start + timedelta(hours=1)
@@ -197,13 +200,72 @@ def generate_hourly_activity(history_data):
             uptime = calculate_machine_uptime(entries, hour_start, hour_end)
             
             machine_hourly_data[machine_id].append({
-                'hour': hour_start.strftime('%H:00'),
+                'hour': hour_start.strftime('%m/%d %H:00'),
                 'activity_percentage': round(uptime, 1),
                 'active_minutes': round((uptime / 100) * 60, 1),
-                'is_current_hour': i == 23
+                'is_current_hour': i == 167
             })
     
     return machine_hourly_data
+
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    """Get notification settings"""
+    try:
+        # Load from .env file
+        load_dotenv(ENV_FILE)
+        
+        # Load pause state from JSON file
+        pause_state = {'notifications_paused': False}
+        if SETTINGS_FILE.exists():
+            with open(SETTINGS_FILE, 'r') as f:
+                pause_state = json.load(f)
+        
+        settings = {
+            'email_recipients': os.getenv('LASER_MONITOR_EMAIL_RECIPIENTS', ''),
+            'sms_recipients': os.getenv('LASER_MONITOR_SMS_RECIPIENTS', ''),
+            'notifications_paused': pause_state.get('notifications_paused', False)
+        }
+        
+        return jsonify(settings)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def update_settings():
+    """Update notification settings"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Ensure .env file exists
+        if not ENV_FILE.exists():
+            ENV_FILE.touch()
+            # Copy from .env.example if it exists
+            env_example = ENV_FILE.parent / '.env.example'
+            if env_example.exists():
+                with open(env_example, 'r') as src:
+                    content = src.read()
+                with open(ENV_FILE, 'w') as dst:
+                    dst.write(content)
+        
+        # Update .env file for recipients
+        if 'email_recipients' in data:
+            set_key(str(ENV_FILE), 'LASER_MONITOR_EMAIL_RECIPIENTS', str(data['email_recipients']))
+        
+        if 'sms_recipients' in data:
+            set_key(str(ENV_FILE), 'LASER_MONITOR_SMS_RECIPIENTS', str(data['sms_recipients']))
+        
+        # Update pause state in JSON file
+        if 'notifications_paused' in data:
+            pause_state = {'notifications_paused': bool(data['notifications_paused'])}
+            with open(SETTINGS_FILE, 'w') as f:
+                json.dump(pause_state, f, indent=2)
+        
+        return jsonify({'success': True, 'message': 'Settings updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Create templates directory if it doesn't exist

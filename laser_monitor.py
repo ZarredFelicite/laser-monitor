@@ -173,6 +173,9 @@ class EmailAlertManager:
         self.alert_sent_for_current_inactive_period: Dict[str, bool] = {}
         # Track the last known status for each machine to detect transitions
         self.last_machine_status: Dict[str, str] = {}
+        # Track startup time to prevent immediate alerts on program start
+        self.startup_time = datetime.now()
+        self.startup_grace_period_minutes = 15  # Don't alert for inactivity detected at startup
         
         # Load environment variables from .env file
         self._load_env_file()
@@ -243,9 +246,33 @@ class EmailAlertManager:
             self.alert_sent_for_current_inactive_period[machine_id] = False
             self.logger.debug(f"Machine {machine_id} transitioned to active - reset alert flag")
     
+    def _check_notifications_paused(self) -> bool:
+        """Check if notifications are paused via settings file"""
+        try:
+            settings_file = Path(self.config.output.output_dir) / 'notification_settings.json'
+            if settings_file.exists():
+                import json
+                with open(settings_file, 'r') as f:
+                    settings = json.load(f)
+                    return settings.get('notifications_paused', False)
+        except Exception as e:
+            self.logger.debug(f"Could not check notification pause state: {e}")
+        return False
+    
     def should_send_alert(self, machine_id: str) -> bool:
         """Check if we should send an alert for this machine"""
         if not self.config.alerts.email_alerts:
+            return False
+        
+        # Don't send alerts within grace period after startup
+        time_since_startup = (datetime.now() - self.startup_time).total_seconds() / 60
+        if time_since_startup < self.startup_grace_period_minutes:
+            self.logger.debug(f"Within startup grace period ({time_since_startup:.1f}/{self.startup_grace_period_minutes} min), skipping alert")
+            return False
+        
+        # Check if notifications are paused
+        if self._check_notifications_paused():
+            self.logger.debug("Notifications are paused, skipping alert")
             return False
         
         if machine_id not in self.config.alerts.alert_machines:
@@ -460,6 +487,9 @@ class SMSAlertManager:
         self.alert_sent_for_current_inactive_period: Dict[str, bool] = {}
         # Track the last known status for each machine to detect transitions
         self.last_machine_status: Dict[str, str] = {}
+        # Track startup time to prevent immediate alerts on program start
+        self.startup_time = datetime.now()
+        self.startup_grace_period_minutes = 15  # Don't alert for inactivity detected at startup
         
         # Load environment variables from .env file
         self._load_env_file()
@@ -540,9 +570,33 @@ class SMSAlertManager:
             self.alert_sent_for_current_inactive_period[machine_id] = False
             self.logger.debug(f"Machine {machine_id} transitioned to active - reset SMS alert flag")
     
+    def _check_notifications_paused(self) -> bool:
+        """Check if notifications are paused via settings file"""
+        try:
+            settings_file = Path(self.config.output.output_dir) / 'notification_settings.json'
+            if settings_file.exists():
+                import json
+                with open(settings_file, 'r') as f:
+                    settings = json.load(f)
+                    return settings.get('notifications_paused', False)
+        except Exception as e:
+            self.logger.debug(f"Could not check notification pause state: {e}")
+        return False
+    
     def should_send_alert(self, machine_id: str) -> bool:
         """Check if we should send an SMS alert for this machine"""
         if not self.config.alerts.sms_alerts:
+            return False
+        
+        # Don't send alerts within grace period after startup
+        time_since_startup = (datetime.now() - self.startup_time).total_seconds() / 60
+        if time_since_startup < self.startup_grace_period_minutes:
+            self.logger.debug(f"Within startup grace period ({time_since_startup:.1f}/{self.startup_grace_period_minutes} min), skipping SMS alert")
+            return False
+        
+        # Check if notifications are paused
+        if self._check_notifications_paused():
+            self.logger.debug("Notifications are paused, skipping SMS alert")
             return False
         
         if machine_id not in self.config.alerts.alert_machines:
@@ -949,7 +1003,7 @@ class LaserMonitor:
             self.logger.debug(f"ROI {i} shape: {roi.shape}")
             
             # Simple analysis of the ROI
-            detection_result = self._analyze_roi(roi, [x1, y1, x2, y2], f"region_{i}")
+            detection_result = self._analyze_roi(roi, [x1, y1, x2, y2], f"region_{i}", i)
             if not detection_result and getattr(self.config.detection, 'bbox_force_detection', False):
                 # Fabricate a baseline detection so downstream activation logic runs
                 detection_result = DetectionResult(
@@ -970,7 +1024,7 @@ class LaserMonitor:
         
         return detections
     
-    def _analyze_roi(self, roi: np.ndarray, bbox: List[int], region_name: str) -> Optional[DetectionResult]:
+    def _analyze_roi(self, roi: np.ndarray, bbox: List[int], region_name: str, roi_index: int = 0) -> Optional[DetectionResult]:
         """Analyze a region of interest using simple image processing"""
         try:
             # Convert to different color spaces for analysis
@@ -1006,63 +1060,65 @@ class LaserMonitor:
                 mid_brightness = float(np.mean(mid_region)) if mid_region.size > 0 else mean_brightness
                 bottom_brightness = float(np.mean(bottom_region)) if bottom_region.size > 0 else mean_brightness
                 
-                # Calculate thresholds for top and middle regions based on bottom third
-                top_threshold = bottom_brightness * self.config.detection.brightness_threshold_ratio
-                mid_threshold = bottom_brightness * self.config.detection.brightness_threshold_ratio
+                # Get per-ROI threshold ratios, or use defaults
+                if (hasattr(self.config.detection, 'brightness_threshold_ratios') and 
+                    self.config.detection.brightness_threshold_ratios and 
+                    roi_index < len(self.config.detection.brightness_threshold_ratios)):
+                    top_ratio, mid_ratio = self.config.detection.brightness_threshold_ratios[roi_index]
+                else:
+                    # Default fallback
+                    top_ratio = mid_ratio = 1.4
                 
-                # Count bright pixels in each region
-                top_bright_pixels = np.sum(top_region > top_threshold) if top_region.size > 0 else 0
-                mid_bright_pixels = np.sum(mid_region > mid_threshold) if mid_region.size > 0 else 0
+                # Calculate thresholds based on bottom third with per-section ratios
+                top_threshold = bottom_brightness * top_ratio
+                mid_threshold = bottom_brightness * mid_ratio
                 
-                top_bright_ratio = top_bright_pixels / top_region.size if top_region.size > 0 else 0.0
-                mid_bright_ratio = mid_bright_pixels / mid_region.size if mid_region.size > 0 else 0.0
-                
-                # Determine activation status for each region
-                top_active = top_bright_ratio >= self.config.detection.brightness_active_ratio  # Working indicator
-                mid_active = mid_bright_ratio >= self.config.detection.brightness_active_ratio  # Machine on indicator
+                # Determine activation status by comparing average brightness to threshold
+                top_active = top_brightness >= top_threshold  # Working indicator
+                mid_active = mid_brightness >= mid_threshold  # Machine on indicator
                 
                 decision_parts = []
                 if top_active:
-                    decision_parts.append(f"working({top_bright_ratio:.3f})")  # top = working
+                    decision_parts.append(f"working({top_brightness:.1f})")  # top = working
                 if mid_active:
-                    decision_parts.append(f"machine_on({mid_bright_ratio:.3f})")  # middle = machine on
+                    decision_parts.append(f"machine_on({mid_brightness:.1f})")  # middle = machine on
                 if not decision_parts:
                     decision_parts.append("machine_off")
                 
                 # Calculate brightness factor (higher brightness = more confident the light is on)
                 brightness_factor = 0.7 + 0.6 * min(1.0, mean_brightness / 200.0)
                 
-                # Determine composite class & derive confidence (same logic as color-based)
+                # Determine composite class & derive confidence
                 if top_active and mid_active:
                     class_name = "machine_active"  # Both on: machine is on AND working
-                    # Confidence based on how far above threshold both ratios are
-                    top_excess = max(0, top_bright_ratio - self.config.detection.brightness_active_ratio)
-                    mid_excess = max(0, mid_bright_ratio - self.config.detection.brightness_active_ratio)
-                    top_conf = 0.5 + min(0.5, top_excess / (2 * self.config.detection.brightness_active_ratio))
-                    mid_conf = 0.5 + min(0.5, mid_excess / (2 * self.config.detection.brightness_active_ratio))
+                    # Confidence based on how far above threshold both brightnesses are
+                    top_excess = max(0, top_brightness - top_threshold)
+                    mid_excess = max(0, mid_brightness - mid_threshold)
+                    top_conf = 0.5 + min(0.5, top_excess / (2 * top_threshold))
+                    mid_conf = 0.5 + min(0.5, mid_excess / (2 * mid_threshold))
                     base_confidence = (top_conf + mid_conf) / 2.0
                     confidence = min(1.0, base_confidence * brightness_factor)
                     laser_status = "active"  # Machine is actively working
                 elif top_active:
                     class_name = "machine_working_only"  # Top only: working but machine may not be fully on
-                    top_excess = max(0, top_bright_ratio - self.config.detection.brightness_active_ratio)
-                    base_confidence = 0.5 + min(0.5, top_excess / (2 * self.config.detection.brightness_active_ratio))
+                    top_excess = max(0, top_brightness - top_threshold)
+                    base_confidence = 0.5 + min(0.5, top_excess / (2 * top_threshold))
                     confidence = min(1.0, base_confidence * brightness_factor)
                     laser_status = "inactive"  # Not fully active without middle (machine on)
                 elif mid_active:
                     class_name = "machine_on_only"  # Middle only: machine is on but not working
-                    mid_excess = max(0, mid_bright_ratio - self.config.detection.brightness_active_ratio)
-                    base_confidence = 0.5 + min(0.5, mid_excess / (2 * self.config.detection.brightness_active_ratio))
+                    mid_excess = max(0, mid_brightness - mid_threshold)
+                    base_confidence = 0.5 + min(0.5, mid_excess / (2 * mid_threshold))
                     confidence = min(1.0, base_confidence * brightness_factor)
                     laser_status = "inactive"  # Not active - machine on but not working
                 else:
                     class_name = "machine_off"  # Both off: machine is completely off
                     # Confidence based on how far below threshold we are
-                    top_deficit = max(0, self.config.detection.brightness_active_ratio - top_bright_ratio)
-                    mid_deficit = max(0, self.config.detection.brightness_active_ratio - mid_bright_ratio)
+                    top_deficit = max(0, top_threshold - top_brightness)
+                    mid_deficit = max(0, mid_threshold - mid_brightness)
                     # Lower confidence when we're far below threshold
-                    top_conf = max(0.1, 0.5 - top_deficit / self.config.detection.brightness_active_ratio)
-                    mid_conf = max(0.1, 0.5 - mid_deficit / self.config.detection.brightness_active_ratio)
+                    top_conf = max(0.1, 0.5 - top_deficit / top_threshold)
+                    mid_conf = max(0.1, 0.5 - mid_deficit / mid_threshold)
                     base_confidence = min(top_conf, mid_conf)  # Use the lower confidence
                     # For inactive states, lower brightness should increase confidence (dark = more likely off)
                     inverse_brightness_factor = 2.0 - brightness_factor  # 1.3 becomes 0.7, 0.7 becomes 1.3
@@ -1080,8 +1136,8 @@ class LaserMonitor:
                     "bottom_brightness": bottom_brightness,
                     "top_threshold": top_threshold,
                     "mid_threshold": mid_threshold,
-                    "top_bright_ratio": top_bright_ratio,
-                    "mid_bright_ratio": mid_bright_ratio,
+                    "top_ratio": top_ratio,
+                    "mid_ratio": mid_ratio,
                     "decision_path": decision_path,
                     "mean_hue": mean_hue,
                     "mean_saturation": mean_saturation,
@@ -1404,15 +1460,17 @@ class LaserMonitor:
         
         # Thresholds info - show different info based on detection mode
         if getattr(self.config.detection, 'use_brightness_threshold', False):
-            # Brightness threshold mode - show per-region threshold info
+            # Brightness threshold mode - show threshold info
             # Get brightness values from first detection if available
             if detections and hasattr(detections[0], 'extras') and detections[0].extras:
                 bottom_brightness = detections[0].extras.get('bottom_brightness', 0)
                 top_threshold = detections[0].extras.get('top_threshold', 0)
                 mid_threshold = detections[0].extras.get('mid_threshold', 0)
-                threshold_text = f"Bottom: {bottom_brightness:.1f} | Thresholds: T={top_threshold:.1f} M={mid_threshold:.1f} | Active: {self.config.detection.brightness_active_ratio:.2f}"
+                top_ratio = detections[0].extras.get('top_ratio', 1.4)
+                mid_ratio = detections[0].extras.get('mid_ratio', 1.4)
+                threshold_text = f"Bottom: {bottom_brightness:.1f} | T: {top_threshold:.1f}({top_ratio:.1f}x) M: {mid_threshold:.1f}({mid_ratio:.1f}x)"
             else:
-                threshold_text = f"Brightness mode | Ratio: {self.config.detection.brightness_threshold_ratio:.1f}x | Active: {self.config.detection.brightness_active_ratio:.2f}"
+                threshold_text = f"Brightness mode | Per-ROI ratios configured"
             cv2.putText(annotated_frame, threshold_text, 
                        (10, status_y_start + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
         else:

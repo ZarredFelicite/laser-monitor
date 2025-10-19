@@ -67,8 +67,7 @@ class DetectionConfig:
 
     # Brightness threshold mode (alternative to color-based detection)
     use_brightness_threshold: bool = True  # Enable brightness-based detection instead of color analysis
-    brightness_threshold_ratio: float = 1.4  # Multiplier for bottom-third brightness to determine active threshold
-    brightness_active_ratio: float = 0.65  # Minimum fraction of ROI pixels above threshold to be considered active
+    brightness_threshold_ratios: List[List[float]] = field(default_factory=lambda: [[1.7, 2.2]])  # Per-ROI, per-section ratios [[top_ratio, mid_ratio], ...] for each visual_prompt (optimized: 92.9% accuracy)
 
 
 @dataclass
