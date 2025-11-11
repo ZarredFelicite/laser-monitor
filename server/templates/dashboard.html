@@ -67,7 +67,10 @@
         }
         
         .image-container {
+            position: relative;
             text-align: center;
+            display: inline-block;
+            max-width: 100%;
         }
         
         .detection-image {
@@ -75,6 +78,35 @@
             height: auto;
             border: 2px solid #ddd;
             border-radius: 4px;
+            display: block;
+        }
+        
+        .detection-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            border-radius: 4px;
+        }
+        
+        .image-legend {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-box {
+            display: inline-block;
+            width: 20px;
+            height: 12px;
+            border: 2px solid #00ff00;
+            background-color: rgba(0, 255, 0, 0.15);
         }
         
         .stats-grid {
@@ -179,6 +211,189 @@
             font-weight: bold;
             color: #007bff;
         }
+        
+        /* Responsive layout - stack vertically on mobile/tall screens */
+        @media (max-width: 768px), (max-aspect-ratio: 1/1) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                grid-column: 1 !important;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .status-indicator {
+                display: block;
+                margin: 10px auto;
+            }
+            
+            .refresh-button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        /* Fine-tune for very narrow screens */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.2em;
+            }
+            
+            .stat-value {
+                font-size: 1.5em;
+            }
+            
+            .machine-uptime-value {
+                font-size: 1em;
+            }
+        }
+        
+        /* Detection Box Controls */
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .controls-info {
+            color: #666;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .add-box-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .add-box-button:hover {
+            background-color: #218838;
+        }
+        
+        .detection-box-item {
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .box-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .box-coords {
+            color: #666;
+            font-size: 0.9em;
+            font-family: monospace;
+        }
+        
+        .delete-box-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .delete-box-button:hover {
+            background-color: #c82333;
+        }
+        
+        .box-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .control-group {
+            background-color: white;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .control-group-title {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+        
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .control-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        .control-button:hover {
+            background-color: #0056b3;
+        }
+        
+        .control-button:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 768px), (max-aspect-ratio: 1/1) {
+            .box-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .add-box-button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -193,8 +408,13 @@
         <!-- Latest Detection Image -->
         <div class="card">
             <h2>📸 Latest Detection</h2>
-            <div class="image-container">
-                <img id="detection-image" class="detection-image" src="/api/latest-image" alt="Latest Detection" onerror="handleImageError(this)">
+            <div class="image-container" id="image-container">
+                <img id="detection-image" class="detection-image" src="/api/latest-image" alt="Latest Detection" onerror="handleImageError(this)" onload="drawDetectionBoxes()">
+                <canvas id="detection-overlay" class="detection-overlay"></canvas>
+            </div>
+            <div class="image-legend">
+                <span class="legend-box"></span>
+                <span>Detection boxes shown in green - adjust using controls below</span>
             </div>
             <div id="image-error" class="error" style="display: none;">
                 No detection image available
@@ -240,6 +460,21 @@
                 <!-- Individual machine charts will be populated here -->
             </div>
         </div>
+        
+        <!-- Detection Box Controls -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>🎯 Detection Box Controls</h2>
+            <div class="controls-header">
+                <button class="add-box-button" onclick="addDetectionBox()">➕ Add Detection Box</button>
+                <div class="controls-info">
+                    Configure detection regions for monitoring specific areas of the camera view
+                </div>
+            </div>
+            <div id="detection-boxes-container">
+                <!-- Detection boxes will be populated here -->
+            </div>
+            <div id="boxes-error" class="error" style="display: none;"></div>
+        </div>
     </div>
     
     <div class="refresh-info">
@@ -253,6 +488,7 @@
             console.log('Refreshing dashboard...');
             loadStats();
             refreshImage();
+            loadDetectionBoxes();
         }
         
         function refreshImage() {
@@ -264,6 +500,86 @@
             img.src = `/api/latest-image?t=${timestamp}`;
             errorDiv.style.display = 'none';
         }
+        
+        function drawDetectionBoxes() {
+            const img = document.getElementById('detection-image');
+            const canvas = document.getElementById('detection-overlay');
+            const container = document.getElementById('image-container');
+            
+            if (!img.complete || img.naturalWidth === 0) {
+                // Image not loaded yet
+                return;
+            }
+            
+            // Set canvas size to match displayed image size
+            canvas.width = img.offsetWidth;
+            canvas.height = img.offsetHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Calculate scale factors
+            const scaleX = img.offsetWidth / imageDimensions[0];
+            const scaleY = img.offsetHeight / imageDimensions[1];
+            
+            // Draw each detection box
+            detectionBoxes.forEach((box, index) => {
+                // Convert normalized coordinates to pixel coordinates
+                const x1 = box[0] * scaleX;
+                const y1 = box[1] * scaleY;
+                const x2 = box[2] * scaleX;
+                const y2 = box[3] * scaleY;
+                const width = x2 - x1;
+                const height = y2 - y1;
+                
+                // Draw semi-transparent box
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, width, height);
+                
+                // Draw filled semi-transparent overlay
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+                ctx.fillRect(x1, y1, width, height);
+                
+                // Draw label background
+                const labelText = `Box ${index + 1}`;
+                const dimensionText = `${Math.round(box[2] - box[0])}×${Math.round(box[3] - box[1])}px`;
+                ctx.font = 'bold 14px Arial';
+                const labelWidth = Math.max(ctx.measureText(labelText).width, ctx.measureText(dimensionText).width) + 10;
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                ctx.fillRect(x1, y1 - 40, labelWidth, 40);
+                
+                // Draw label text
+                ctx.fillStyle = '#000';
+                ctx.fillText(labelText, x1 + 5, y1 - 22);
+                ctx.font = '12px Arial';
+                ctx.fillText(dimensionText, x1 + 5, y1 - 6);
+                
+                // Draw corner handles
+                const handleSize = 8;
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(x1 - handleSize/2, y1 - handleSize/2, handleSize, handleSize); // Top-left
+                ctx.fillRect(x2 - handleSize/2, y1 - handleSize/2, handleSize, handleSize); // Top-right
+                ctx.fillRect(x1 - handleSize/2, y2 - handleSize/2, handleSize, handleSize); // Bottom-left
+                ctx.fillRect(x2 - handleSize/2, y2 - handleSize/2, handleSize, handleSize); // Bottom-right
+                
+                // Draw center crosshair
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 1;
+                const centerX = (x1 + x2) / 2;
+                const centerY = (y1 + y2) / 2;
+                const crossSize = 10;
+                ctx.beginPath();
+                ctx.moveTo(centerX - crossSize, centerY);
+                ctx.lineTo(centerX + crossSize, centerY);
+                ctx.moveTo(centerX, centerY - crossSize);
+                ctx.lineTo(centerX, centerY + crossSize);
+                ctx.stroke();
+            });
+        }
+        
+        // Redraw boxes when window is resized
+        window.addEventListener('resize', drawDetectionBoxes);
         
         function handleImageError(img) {
             console.log('Image load error');
@@ -443,9 +759,195 @@
             });
         }
         
+        // Detection Box Management
+        let detectionBoxes = [];
+        let imageDimensions = [1920, 1080];
+        const STEP_SIZE = 10; // Pixels to move/resize per button click
+        
+        function loadDetectionBoxes() {
+            fetch('/api/detection-boxes')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Detection boxes loaded:', data);
+                    if (data.error) {
+                        document.getElementById('boxes-error').textContent = data.error;
+                        document.getElementById('boxes-error').style.display = 'block';
+                        detectionBoxes = [];
+                    } else {
+                        document.getElementById('boxes-error').style.display = 'none';
+                        detectionBoxes = data.boxes || [];
+                        imageDimensions = data.image_dimensions || [1920, 1080];
+                    }
+                    renderDetectionBoxes();
+                    // Redraw overlay after loading new boxes
+                    setTimeout(drawDetectionBoxes, 100); // Small delay to ensure image is loaded
+                })
+                .catch(error => {
+                    console.error('Error loading detection boxes:', error);
+                    document.getElementById('boxes-error').textContent = 'Failed to load detection boxes';
+                    document.getElementById('boxes-error').style.display = 'block';
+                });
+        }
+        
+        function renderDetectionBoxes() {
+            const container = document.getElementById('detection-boxes-container');
+            container.innerHTML = '';
+            
+            if (detectionBoxes.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No detection boxes configured. Click "Add Detection Box" to create one.</div>';
+                drawDetectionBoxes(); // Clear overlay
+                return;
+            }
+            
+            detectionBoxes.forEach((box, index) => {
+                const boxDiv = document.createElement('div');
+                boxDiv.className = 'detection-box-item';
+                boxDiv.innerHTML = `
+                    <div class="box-header">
+                        <div>
+                            <div class="box-title">Detection Box ${index + 1}</div>
+                            <div class="box-coords">[${Math.round(box[0])}, ${Math.round(box[1])}, ${Math.round(box[2])}, ${Math.round(box[3])}]</div>
+                        </div>
+                        <button class="delete-box-button" onclick="deleteDetectionBox(${index})">🗑️ Delete</button>
+                    </div>
+                    <div class="box-controls">
+                        <div class="control-group">
+                            <div class="control-group-title">📍 Position</div>
+                            <div class="control-buttons">
+                                <button class="control-button" onclick="adjustBox(${index}, 'x', -1)">X−</button>
+                                <button class="control-button" onclick="adjustBox(${index}, 'x', 1)">X+</button>
+                                <button class="control-button" onclick="adjustBox(${index}, 'y', -1)">Y−</button>
+                                <button class="control-button" onclick="adjustBox(${index}, 'y', 1)">Y+</button>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-group-title">📏 Size</div>
+                            <div class="control-buttons">
+                                <button class="control-button" onclick="adjustBoxSize(${index}, 'width', -1)">W−</button>
+                                <button class="control-button" onclick="adjustBoxSize(${index}, 'width', 1)">W+</button>
+                                <button class="control-button" onclick="adjustBoxSize(${index}, 'height', -1)">H−</button>
+                                <button class="control-button" onclick="adjustBoxSize(${index}, 'height', 1)">H+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(boxDiv);
+            });
+            
+            // Redraw overlay with updated boxes
+            drawDetectionBoxes();
+        }
+        
+        function adjustBox(index, axis, direction) {
+            if (index < 0 || index >= detectionBoxes.length) return;
+            
+            const box = [...detectionBoxes[index]]; // Clone the box
+            const delta = STEP_SIZE * direction;
+            
+            if (axis === 'x') {
+                // Move x1 and x2
+                box[0] = Math.max(0, Math.min(imageDimensions[0], box[0] + delta));
+                box[2] = Math.max(0, Math.min(imageDimensions[0], box[2] + delta));
+            } else if (axis === 'y') {
+                // Move y1 and y2
+                box[1] = Math.max(0, Math.min(imageDimensions[1], box[1] + delta));
+                box[3] = Math.max(0, Math.min(imageDimensions[1], box[3] + delta));
+            }
+            
+            detectionBoxes[index] = box;
+            saveDetectionBoxes();
+        }
+        
+        function adjustBoxSize(index, dimension, direction) {
+            if (index < 0 || index >= detectionBoxes.length) return;
+            
+            const box = [...detectionBoxes[index]]; // Clone the box
+            const delta = STEP_SIZE * direction;
+            
+            if (dimension === 'width') {
+                // Adjust x2 (right edge)
+                box[2] = Math.max(box[0] + 10, Math.min(imageDimensions[0], box[2] + delta));
+            } else if (dimension === 'height') {
+                // Adjust y2 (bottom edge)
+                box[3] = Math.max(box[1] + 10, Math.min(imageDimensions[1], box[3] + delta));
+            }
+            
+            detectionBoxes[index] = box;
+            saveDetectionBoxes();
+        }
+        
+        function addDetectionBox() {
+            // Add a default box in the center
+            const centerX = Math.floor(imageDimensions[0] / 2);
+            const centerY = Math.floor(imageDimensions[1] / 2);
+            const defaultSize = 100;
+            
+            const newBox = [
+                centerX - defaultSize / 2,
+                centerY - defaultSize / 2,
+                centerX + defaultSize / 2,
+                centerY + defaultSize / 2
+            ];
+            
+            detectionBoxes.push(newBox);
+            saveDetectionBoxes();
+        }
+        
+        function deleteDetectionBox(index) {
+            if (index < 0 || index >= detectionBoxes.length) return;
+            
+            if (confirm(`Delete Detection Box ${index + 1}?`)) {
+                fetch(`/api/detection-boxes/${index}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        detectionBoxes = data.boxes;
+                        renderDetectionBoxes();
+                    } else {
+                        alert('Failed to delete box: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting box:', error);
+                    alert('Failed to delete box');
+                });
+            }
+        }
+        
+        function saveDetectionBoxes() {
+            // Immediately update the overlay for instant feedback
+            drawDetectionBoxes();
+            
+            fetch('/api/detection-boxes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    boxes: detectionBoxes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Detection boxes saved');
+                    renderDetectionBoxes();
+                } else {
+                    alert('Failed to save boxes: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving boxes:', error);
+                alert('Failed to save boxes');
+            });
+        }
+        
         // Load initial data
         document.addEventListener('DOMContentLoaded', function() {
             refreshDashboard();
+            loadDetectionBoxes();
         });
     </script>
 </body>

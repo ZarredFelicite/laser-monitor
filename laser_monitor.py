@@ -1786,6 +1786,9 @@ class LaserMonitor:
     
     def _run_single_shot(self) -> bool:
         """Run single detection cycle (legacy behavior)"""
+        # Check for config changes before running
+        self.reload_visual_prompts()
+        
         success = self.run_single_cycle()
         if success:
             # For single-shot mode, also update machine history
@@ -1804,6 +1807,10 @@ class LaserMonitor:
                 start_time = time.time()
                 
                 self.logger.info(f"=== Monitoring Cycle {cycle_count} ===")
+                
+                # Check for config changes and reload if necessary
+                if self.reload_visual_prompts():
+                    self.logger.info("Detection boxes updated from web UI")
                 
                 # Run detection cycle
                 success = self.run_single_cycle()
@@ -1826,6 +1833,60 @@ class LaserMonitor:
         self.monitoring_active = False
         self.logger.info(f"Continuous monitoring ended after {cycle_count} cycles")
         return True
+    
+    def reload_visual_prompts(self) -> bool:
+        """Reload visual prompts from web_ui.config.py if it exists and has been modified
+        
+        Returns True if config was reloaded, False otherwise
+        """
+        web_ui_config_path = Path("web_ui.config.py")
+        
+        # Only reload if using visual mode
+        if self.config.detection.mode != "visual":
+            return False
+        
+        # Check if web_ui.config.py exists
+        if not web_ui_config_path.exists():
+            return False
+        
+        try:
+            # Check modification time
+            current_mtime = web_ui_config_path.stat().st_mtime
+            
+            # Store last reload time if not set
+            if not hasattr(self, '_last_config_reload_time'):
+                self._last_config_reload_time = current_mtime
+                return False
+            
+            # Check if config has been modified since last reload
+            if current_mtime <= self._last_config_reload_time:
+                return False
+            
+            # Reload the config
+            from config.config import load_visual_prompts
+            self.logger.info("Detected web_ui.config.py changes, reloading visual prompts...")
+            
+            visual_data = load_visual_prompts(str(web_ui_config_path))
+            
+            # Update detection config
+            self.config.detection.refer_image = visual_data.get('refer_image')
+            visual_prompts = visual_data.get('visual_prompts') or []
+            
+            if len(visual_prompts) == 1:
+                self.config.detection.visual_prompt_bbox = visual_prompts[0]
+                self.config.detection.visual_prompts = visual_prompts
+            elif len(visual_prompts) > 1:
+                self.config.detection.visual_prompts = visual_prompts
+            else:
+                self.config.detection.visual_prompts = []
+            
+            self._last_config_reload_time = current_mtime
+            self.logger.info(f"Visual prompts reloaded: {len(visual_prompts)} detection boxes")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to reload visual prompts: {e}")
+            return False
     
     def stop_monitoring(self):
         """Stop continuous monitoring"""
