@@ -25,23 +25,7 @@ Real-time laser cutter monitoring system using indicator light detection (bright
   - Works in both continuous monitoring and single-shot modes
 - Responsive layout: 2-column on desktop (Position|Size), single column on mobile/tall screens.
 - `refer_image` auto-set to latest detection screenshot in `output/screenshots/detection_*.jpg`.
-
-## Update (2025-10-08 - Brightness Threshold Detection Mode)
-=======
-## Current Features
-- **Detection modes**: brightness threshold (default) or color-based (red/orange)
-- **Brightness detection**: analyzes top/middle thirds vs bottom baseline, 92.9% success rate (optimized)
-- **Color detection**: red=working, orange=machine_on, both=active (41% success rate)
-- **Alerts**: email + SMS (Twilio) on state transitions
-  - 15-minute startup grace period (no alerts on program start for pre-existing inactivity)
-  - Pause/resume via web dashboard
-- **Web Dashboard**: Flask server with live stats, 7-day activity charts, settings management
-  - Image history: last 15 images (30 minutes) with navigation arrows
-  - Keyboard navigation: Left/Right arrow keys
-- **Config**: .env for recipients/credentials, Python dataclass configs
-- **History**: 7-day retention, auto-cleanup
-- **Optimization**: grid search tool for finding optimal threshold ratios
->>>>>>> d500247f16e43aedf89efca9d29ee2c18bf0f947
+- **STATUS**: Fully integrated and verified (see DETECTION_BOX_INTEGRATION_COMPLETE.md)
 
 ## Quick Start
 ```bash
