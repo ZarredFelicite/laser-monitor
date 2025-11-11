@@ -111,27 +111,28 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
         .stat-item {
             text-align: center;
-            padding: 15px;
+            padding: 10px;
             background-color: #f8f9fa;
             border-radius: 6px;
         }
         
         .stat-value {
-            font-size: 2em;
+            font-size: 1.5em;
             font-weight: bold;
             color: #007bff;
         }
         
         .stat-label {
             color: #666;
-            margin-top: 5px;
+            margin-top: 3px;
+            font-size: 0.85em;
         }
         
         .chart-container {
@@ -196,18 +197,19 @@
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 4px;
-            padding: 10px;
+            padding: 8px;
             text-align: center;
         }
         
         .machine-id {
             font-weight: bold;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            font-size: 0.9em;
         }
         
         .machine-uptime-value {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: bold;
             color: #007bff;
         }
@@ -223,7 +225,7 @@
             }
             
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
             
             body {
@@ -445,19 +447,11 @@
             </div>
             
             <!-- Per-machine uptime details -->
-            <div id="machine-details" style="margin-top: 20px;">
-                <h3 style="color: #333; margin-bottom: 10px;">Per-Machine Uptime (Last Hour)</h3>
-                <div id="machine-uptimes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <div id="machine-details" style="margin-top: 15px;">
+                <h3 style="color: #333; margin-bottom: 8px; font-size: 1em;">Per-Machine Uptime (Last Hour)</h3>
+                <div id="machine-uptimes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
                     <!-- Machine uptime items will be populated here -->
                 </div>
-            </div>
-        </div>
-        
-        <!-- Activity Charts -->
-        <div class="card" style="grid-column: 1 / -1;">
-            <h2>📈 24-Hour Activity by Machine</h2>
-            <div id="charts-container">
-                <!-- Individual machine charts will be populated here -->
             </div>
         </div>
         
@@ -474,6 +468,14 @@
                 <!-- Detection boxes will be populated here -->
             </div>
             <div id="boxes-error" class="error" style="display: none;"></div>
+        </div>
+        
+        <!-- Activity Charts -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2>📈 24-Hour Activity by Machine</h2>
+            <div id="charts-container">
+                <!-- Individual machine charts will be populated here -->
+            </div>
         </div>
     </div>
     
@@ -793,6 +795,8 @@
             const container = document.getElementById('detection-boxes-container');
             container.innerHTML = '';
             
+            console.log('Rendering detection boxes:', detectionBoxes.length, 'boxes');
+            
             if (detectionBoxes.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No detection boxes configured. Click "Add Detection Box" to create one.</div>';
                 drawDetectionBoxes(); // Clear overlay
@@ -946,8 +950,10 @@
         
         // Load initial data
         document.addEventListener('DOMContentLoaded', function() {
-            refreshDashboard();
+            // Load detection boxes first, then load stats and image
             loadDetectionBoxes();
+            loadStats();
+            refreshImage();
         });
     </script>
 </body>
