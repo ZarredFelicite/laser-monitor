@@ -268,7 +268,7 @@ def load_web_ui_config():
         sys.modules["web_ui_config"] = module
         spec.loader.exec_module(module)
         
-        boxes = getattr(module, 'visual_prompts', [])
+        normalized_boxes = getattr(module, 'visual_prompts', [])
         refer_image = getattr(module, 'refer_image', None)
         image_dimensions_dict = getattr(module, 'image_dimensions', {'width': 1920, 'height': 1080})
         
@@ -277,7 +277,24 @@ def load_web_ui_config():
         else:
             image_dimensions = [1920, 1080]
         
-        return {'boxes': boxes, 'refer_image': refer_image, 'image_dimensions': image_dimensions}
+        # Convert normalized coordinates (0-1) to pixel coordinates
+        pixel_boxes = []
+        for box in normalized_boxes:
+            # Check if box is already in pixel format (values > 1) or normalized (values 0-1)
+            if all(coord <= 1.0 for coord in box):
+                # Normalized format - convert to pixels
+                pixel_box = [
+                    box[0] * image_dimensions[0],  # x1
+                    box[1] * image_dimensions[1],  # y1
+                    box[2] * image_dimensions[0],  # x2
+                    box[3] * image_dimensions[1]   # y2
+                ]
+                pixel_boxes.append(pixel_box)
+            else:
+                # Already in pixel format
+                pixel_boxes.append(box)
+        
+        return {'boxes': pixel_boxes, 'refer_image': refer_image, 'image_dimensions': image_dimensions}
     
     except Exception as e:
         print(f"Error loading web_ui config: {e}")
@@ -300,6 +317,23 @@ def save_web_ui_config(boxes, refer_image=None, image_dimensions=None):
         except:
             refer_image = ""
     
+    # Convert pixel coordinates to normalized coordinates (0-1) for storage
+    normalized_boxes = []
+    for box in boxes:
+        # Check if box is already normalized or in pixel format
+        if all(coord <= 1.0 for coord in box):
+            # Already normalized
+            normalized_boxes.append(box)
+        else:
+            # Convert from pixels to normalized
+            normalized_box = [
+                box[0] / image_dimensions[0],  # x1
+                box[1] / image_dimensions[1],  # y1
+                box[2] / image_dimensions[0],  # x2
+                box[3] / image_dimensions[1]   # y2
+            ]
+            normalized_boxes.append(normalized_box)
+    
     # Generate Python config content
     config_content = f'''#!/usr/bin/env python3
 """
@@ -315,7 +349,7 @@ and is compatible with create_config_with_visual_prompts().
 refer_image = r"{refer_image}"
 
 # Visual prompt bounding boxes (normalized coordinates: x1, y1, x2, y2)
-visual_prompts = {boxes!r}
+visual_prompts = {normalized_boxes!r}
 
 # Image dimensions (for reference)
 image_dimensions = {{
@@ -357,6 +391,8 @@ def update_detection_boxes():
     """Update detection box configuration"""
     try:
         data = request.json
+        if data is None:
+            return jsonify({'error': 'No JSON data provided'}), 400
         boxes = data.get('boxes', [])
         
         # Load current config to preserve refer_image and dimensions
