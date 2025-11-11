@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, render_template, jsonify, send_file, request
 import glob
+from dotenv import load_dotenv, set_key, find_dotenv
 
 app = Flask(__name__)
 
@@ -20,14 +21,57 @@ HISTORY_FILE = OUTPUT_DIR / "machine_history.json"
 PROJECT_ROOT = Path(__file__).parent.parent
 WEB_UI_CONFIG_FILE = PROJECT_ROOT / "web_ui.config.py"
 
+# Store settings in server directory (writable)
+SERVER_DIR = Path(__file__).parent
+SETTINGS_FILE = SERVER_DIR / "notification_settings.json"
+ENV_FILE = Path(__file__).parent.parent / ".env"
+
 @app.route('/')
 def dashboard():
     """Main dashboard page"""
     return render_template('dashboard.html')
 
+@app.route('/api/images')
+def get_images():
+    """Get list of available images"""
+    try:
+        image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))
+        if not image_files:
+            return jsonify({'images': [], 'total': 0})
+        
+        # Sort by modification time (newest first), limit to last 15
+        image_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+        image_files = image_files[:15]
+        
+        images = []
+        for img in image_files:
+            images.append({
+                'filename': img.name,
+                'timestamp': datetime.fromtimestamp(img.stat().st_mtime).isoformat(),
+                'url': f'/api/image/{img.name}'
+            })
+        
+        return jsonify({'images': images, 'total': len(images)})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/image/<filename>')
+def get_image(filename):
+    """Serve a specific detection image by filename"""
+    try:
+        image_path = SCREENSHOTS_DIR / filename
+        if not image_path.exists():
+            return jsonify({'error': 'Image not found'}), 404
+        
+        return send_file(image_path, mimetype='image/jpeg')
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/latest-image')
 def latest_image():
-    """Serve the latest detection image"""
+    """Serve the latest detection image (legacy endpoint)"""
     try:
         # Find the most recent detection image
         image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))
@@ -175,7 +219,7 @@ def calculate_overall_uptime(history_data, hours_back=1):
     return overall_uptime, machine_uptimes
 
 def generate_hourly_activity(history_data):
-    """Generate hourly activity data for the last 24 hours per machine"""
+    """Generate hourly activity data for the last 7 days per machine"""
     now = datetime.now()
     current_hour = now.replace(minute=0, second=0, microsecond=0)
     machine_hourly_data = {}
@@ -184,11 +228,11 @@ def generate_hourly_activity(history_data):
     for machine_id in history_data.keys():
         machine_hourly_data[machine_id] = []
     
-    # Create 24 hourly buckets aligned to actual hour boundaries
-    for i in range(24):
-        hour_start = current_hour - timedelta(hours=23-i)
-        # For the current hour (i == 23), use current time as end
-        if i == 23:
+    # Create 168 hourly buckets (7 days * 24 hours)
+    for i in range(168):
+        hour_start = current_hour - timedelta(hours=167-i)
+        # For the current hour (i == 167), use current time as end
+        if i == 167:
             hour_end = now
         else:
             hour_end = hour_start + timedelta(hours=1)
@@ -199,14 +243,15 @@ def generate_hourly_activity(history_data):
             uptime = calculate_machine_uptime(entries, hour_start, hour_end)
             
             machine_hourly_data[machine_id].append({
-                'hour': hour_start.strftime('%H:00'),
+                'hour': hour_start.strftime('%m/%d %H:00'),
                 'activity_percentage': round(uptime, 1),
                 'active_minutes': round((uptime / 100) * 60, 1),
-                'is_current_hour': i == 23
+                'is_current_hour': i == 167
             })
     
     return machine_hourly_data
 
+<<<<<<< HEAD
 def load_web_ui_config():
     """Load detection boxes from web_ui.config.py"""
     if not WEB_UI_CONFIG_FILE.exists():
@@ -344,6 +389,64 @@ def delete_detection_box(box_index):
         else:
             return jsonify({'error': 'Invalid box index'}), 400
     
+=======
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    """Get notification settings"""
+    try:
+        # Load from .env file
+        load_dotenv(ENV_FILE)
+        
+        # Load pause state from JSON file
+        pause_state = {'notifications_paused': False}
+        if SETTINGS_FILE.exists():
+            with open(SETTINGS_FILE, 'r') as f:
+                pause_state = json.load(f)
+        
+        settings = {
+            'email_recipients': os.getenv('LASER_MONITOR_EMAIL_RECIPIENTS', ''),
+            'sms_recipients': os.getenv('LASER_MONITOR_SMS_RECIPIENTS', ''),
+            'notifications_paused': pause_state.get('notifications_paused', False)
+        }
+        
+        return jsonify(settings)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def update_settings():
+    """Update notification settings"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Ensure .env file exists
+        if not ENV_FILE.exists():
+            ENV_FILE.touch()
+            # Copy from .env.example if it exists
+            env_example = ENV_FILE.parent / '.env.example'
+            if env_example.exists():
+                with open(env_example, 'r') as src:
+                    content = src.read()
+                with open(ENV_FILE, 'w') as dst:
+                    dst.write(content)
+        
+        # Update .env file for recipients
+        if 'email_recipients' in data:
+            set_key(str(ENV_FILE), 'LASER_MONITOR_EMAIL_RECIPIENTS', str(data['email_recipients']))
+        
+        if 'sms_recipients' in data:
+            set_key(str(ENV_FILE), 'LASER_MONITOR_SMS_RECIPIENTS', str(data['sms_recipients']))
+        
+        # Update pause state in JSON file
+        if 'notifications_paused' in data:
+            pause_state = {'notifications_paused': bool(data['notifications_paused'])}
+            with open(SETTINGS_FILE, 'w') as f:
+                json.dump(pause_state, f, indent=2)
+        
+        return jsonify({'success': True, 'message': 'Settings updated successfully'})
+>>>>>>> d500247f16e43aedf89efca9d29ee2c18bf0f947
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

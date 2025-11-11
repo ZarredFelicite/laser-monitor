@@ -27,9 +27,11 @@ config.detection.refer_image = refer_image
 config.detection.indicator_mode = False  # Disable color-based indicator mode
 config.detection.use_brightness_threshold = True  # Enable brightness threshold mode
 
-# Brightness threshold configuration
-config.detection.brightness_threshold_ratio = 1.5  # Threshold = 1.5x bottom third brightness
-config.detection.brightness_active_ratio = 0.3     # 30% of pixels must be above threshold
+# Brightness threshold configuration - per-ROI, per-section ratios
+config.detection.brightness_threshold_ratios = [
+    [1.5, 1.5],  # machine_0: top=1.5x, mid=1.5x
+    [1.5, 1.5]   # machine_1: top=1.5x, mid=1.5x
+]
 
 # Other settings
 config.detection.confidence_threshold = 0.1

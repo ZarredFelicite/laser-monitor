@@ -32,9 +32,12 @@ config.detection.indicator_mode = False
 # Enable brightness threshold detection
 config.detection.use_brightness_threshold = True
 
-# Brightness threshold configuration
-config.detection.brightness_threshold_ratio = 1.5  # Threshold = 1.5x bottom third brightness
-config.detection.brightness_active_ratio = 0.3     # 30% of pixels must be above threshold for "active"
+# Brightness threshold configuration - per-ROI, per-section ratios
+# Format: [[top_ratio, mid_ratio], ...] for each visual_prompt
+config.detection.brightness_threshold_ratios = [
+    [1.5, 1.5],  # machine_0: top=1.5x, mid=1.5x
+    [1.5, 1.5]   # machine_1: top=1.5x, mid=1.5x
+]
 
 # Display settings
 config.display.display_video = True
