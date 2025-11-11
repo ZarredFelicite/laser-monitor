@@ -3,8 +3,9 @@
 ## Project Overview
 Real-time laser cutter monitoring system using indicator light detection (brightness or color-based).
 
-<<<<<<< HEAD
-## Update (2025-11-12 - Web UI Detection Box Controls)
+## Recent Updates
+
+### 2025-11-12: Web UI Detection Box Controls
 
 - Added web dashboard UI for managing detection boxes (visual prompts) at `server/templates/dashboard.html`.
 - Detection box controls allow real-time adjustment of position (X+/X-/Y+/Y-) and size (W+/W-/H+/H-) with 10px increments.
