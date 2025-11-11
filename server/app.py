@@ -251,7 +251,6 @@ def generate_hourly_activity(history_data):
     
     return machine_hourly_data
 
-<<<<<<< HEAD
 def load_web_ui_config():
     """Load detection boxes from web_ui.config.py"""
     if not WEB_UI_CONFIG_FILE.exists():
@@ -388,8 +387,9 @@ def delete_detection_box(box_index):
                 return jsonify({'error': 'Failed to save config'}), 500
         else:
             return jsonify({'error': 'Invalid box index'}), 400
-    
-=======
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
     """Get notification settings"""
@@ -446,7 +446,6 @@ def update_settings():
                 json.dump(pause_state, f, indent=2)
         
         return jsonify({'success': True, 'message': 'Settings updated successfully'})
->>>>>>> d500247f16e43aedf89efca9d29ee2c18bf0f947
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
