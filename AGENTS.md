@@ -3,19 +3,29 @@
 ## Project Overview
 Real-time laser cutter monitoring system using indicator light detection (brightness or color-based).
 
-## Current Features
-- **Detection modes**: brightness threshold (default) or color-based (red/orange)
-- **Brightness detection**: analyzes top/middle thirds vs bottom baseline, 92.9% success rate (optimized)
-- **Color detection**: red=working, orange=machine_on, both=active (41% success rate)
-- **Alerts**: email + SMS (Twilio) on state transitions
-  - 15-minute startup grace period (no alerts on program start for pre-existing inactivity)
-  - Pause/resume via web dashboard
-- **Web Dashboard**: Flask server with live stats, 7-day activity charts, settings management
-  - Image history: last 15 images (30 minutes) with navigation arrows
-  - Keyboard navigation: Left/Right arrow keys
-- **Config**: .env for recipients/credentials, Python dataclass configs
-- **History**: 7-day retention, auto-cleanup
-- **Optimization**: grid search tool for finding optimal threshold ratios
+<<<<<<< HEAD
+## Update (2025-11-12 - Web UI Detection Box Controls)
+
+- Added web dashboard UI for managing detection boxes (visual prompts) at `server/templates/dashboard.html`.
+- Detection box controls allow real-time adjustment of position (X+/X-/Y+/Y-) and size (W+/W-/H+/H-) with 10px increments.
+- **Live visual overlay**: Detection boxes rendered in real-time on the latest image with green borders, semi-transparent fill, and labels.
+  - Canvas overlay shows box position, dimensions, corner handles, and center crosshair
+  - Instant visual feedback when adjusting boxes - no need to wait for next detection
+  - Dimensions displayed on each box (e.g., "128×96px")
+  - Boxes numbered for easy identification
+- Each box displays coordinates and has a delete button with confirmation.
+- New Flask API endpoints: GET/POST `/api/detection-boxes`, DELETE `/api/detection-boxes/<index>`.
+- **Configuration persistence**: Web UI saves to `web_ui.config.py` in Python format compatible with ConfigManager.
+- `web_ui.config.py` follows same format as `visual_prompt_selector.py` output (has `refer_image`, `visual_prompts`, `image_dimensions`, `metadata`).
+- ConfigManager auto-detects `web_ui.config.py` via `_find_visual_prompt_config()` pattern matching (`*.config.py`).
+- Config is loaded using `create_config_with_visual_prompts()` which sets `detection.mode = "visual"` and populates `detection.visual_prompts`.
+- **Hot-reload**: Changes take effect on the NEXT image/detection cycle - no monitor restart required!
+  - `LaserMonitor.reload_visual_prompts()` checks `web_ui.config.py` modification time before each cycle
+  - Automatically reloads visual prompts when web UI changes are detected
+  - Works in both continuous monitoring and single-shot modes
+- Responsive layout: 2-column on desktop (Position|Size), single column on mobile/tall screens.
+- `refer_image` auto-set to latest detection screenshot in `output/screenshots/detection_*.jpg`.
+- **STATUS**: Fully integrated and verified (see DETECTION_BOX_INTEGRATION_COMPLETE.md)
 
 ## Quick Start
 ```bash
