@@ -1911,8 +1911,8 @@ class LaserMonitor:
         """
         web_ui_config_path = Path("web_ui.config.py")
         
-        # Only reload if using visual mode
-        if self.config.detection.mode != "visual":
+        # Reload for visual and bbox modes (web UI edits boxes for both)
+        if self.config.detection.mode not in ("visual", "bbox"):
             return False
         
         # Check if web_ui.config.py exists

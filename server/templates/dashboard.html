@@ -684,9 +684,8 @@
             <h2>🎯 Detection Box Controls</h2>
             <div class="controls-header">
                 <button class="add-box-button" onclick="addDetectionBox()">➕ Add Detection Box</button>
-                <div class="controls-info">
-                    Configure detection regions for monitoring specific areas of the camera view
-                </div>
+                <button id="save-boxes-button" class="save-button" style="width: auto; padding: 10px 20px;" onclick="saveDetectionBoxes()" disabled>💾 Save Detection Boxes</button>
+                <div id="boxes-dirty-status" class="controls-info">No unsaved changes</div>
             </div>
             <div id="detection-boxes-container">
                 <!-- Detection boxes will be populated here -->
@@ -786,7 +785,7 @@
                 
                 // Draw semi-transparent box
                 ctx.strokeStyle = '#00ff00';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 2;
                 ctx.strokeRect(x1, y1, width, height);
                 
                 // Draw filled semi-transparent overlay
@@ -795,25 +794,14 @@
                 
                 // Draw label background
                 const labelText = `Box ${index + 1}`;
-                const dimensionText = `${Math.round(box[2] - box[0])}×${Math.round(box[3] - box[1])}px`;
                 ctx.font = 'bold 14px Arial';
-                const labelWidth = Math.max(ctx.measureText(labelText).width, ctx.measureText(dimensionText).width) + 10;
+                const labelWidth = ctx.measureText(labelText).width + 10;
                 ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
-                ctx.fillRect(x1, y1 - 40, labelWidth, 40);
+                ctx.fillRect(x1, y1 - 24, labelWidth, 24);
                 
                 // Draw label text
                 ctx.fillStyle = '#000';
-                ctx.fillText(labelText, x1 + 5, y1 - 22);
-                ctx.font = '12px Arial';
-                ctx.fillText(dimensionText, x1 + 5, y1 - 6);
-                
-                // Draw corner handles
-                const handleSize = 8;
-                ctx.fillStyle = '#00ff00';
-                ctx.fillRect(x1 - handleSize/2, y1 - handleSize/2, handleSize, handleSize); // Top-left
-                ctx.fillRect(x2 - handleSize/2, y1 - handleSize/2, handleSize, handleSize); // Top-right
-                ctx.fillRect(x1 - handleSize/2, y2 - handleSize/2, handleSize, handleSize); // Bottom-left
-                ctx.fillRect(x2 - handleSize/2, y2 - handleSize/2, handleSize, handleSize); // Bottom-right
+                ctx.fillText(labelText, x1 + 5, y1 - 8);
                 
                 // Draw center crosshair
                 ctx.strokeStyle = '#00ff00';
@@ -1014,7 +1002,24 @@
         // Detection Box Management
         let detectionBoxes = [];
         let imageDimensions = [1920, 1080];
-        const STEP_SIZE = 10; // Pixels to move/resize per button click
+        let boxesDirty = false;
+        const STEP_SIZE = 5; // Pixels to move/resize per button click
+
+        function setBoxesDirty(dirty) {
+            boxesDirty = dirty;
+            const saveBtn = document.getElementById('save-boxes-button');
+            const dirtyStatus = document.getElementById('boxes-dirty-status');
+            if (saveBtn) {
+                saveBtn.disabled = !dirty;
+                saveBtn.style.opacity = dirty ? '1' : '0.6';
+                saveBtn.style.cursor = dirty ? 'pointer' : 'not-allowed';
+            }
+            if (dirtyStatus) {
+                dirtyStatus.textContent = dirty ? 'Unsaved changes — click Save Detection Boxes to apply' : 'No unsaved changes';
+                dirtyStatus.style.color = dirty ? '#dc3545' : '#666';
+                dirtyStatus.style.fontWeight = dirty ? 'bold' : 'normal';
+            }
+        }
         
         function loadDetectionBoxes() {
             fetch('/api/detection-boxes')
@@ -1034,6 +1039,7 @@
                         console.log('Image dimensions:', imageDimensions);
                     }
                     renderDetectionBoxes();
+                    setBoxesDirty(false);
                     // Redraw overlay after loading new boxes
                     setTimeout(drawDetectionBoxes, 100); // Small delay to ensure image is loaded
                 })
@@ -1112,7 +1118,8 @@
             }
             
             detectionBoxes[index] = box;
-            saveDetectionBoxes();
+            renderDetectionBoxes();
+            setBoxesDirty(true);
         }
         
         function adjustBoxSize(index, dimension, direction) {
@@ -1130,7 +1137,8 @@
             }
             
             detectionBoxes[index] = box;
-            saveDetectionBoxes();
+            renderDetectionBoxes();
+            setBoxesDirty(true);
         }
         
         function addDetectionBox() {
@@ -1147,34 +1155,25 @@
             ];
             
             detectionBoxes.push(newBox);
-            saveDetectionBoxes();
+            renderDetectionBoxes();
+            setBoxesDirty(true);
         }
         
         function deleteDetectionBox(index) {
             if (index < 0 || index >= detectionBoxes.length) return;
-            
+
             if (confirm(`Delete Detection Box ${index + 1}?`)) {
-                fetch(`/api/detection-boxes/${index}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        detectionBoxes = data.boxes;
-                        renderDetectionBoxes();
-                    } else {
-                        alert('Failed to delete box: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting box:', error);
-                    alert('Failed to delete box');
-                });
+                detectionBoxes.splice(index, 1);
+                renderDetectionBoxes();
+                setBoxesDirty(true);
             }
         }
         
         function saveDetectionBoxes() {
-            // Immediately update the overlay for instant feedback
+            if (!boxesDirty) {
+                return;
+            }
+            // Keep overlay updated while saving
             drawDetectionBoxes();
             
             fetch('/api/detection-boxes', {
@@ -1190,7 +1189,11 @@
             .then(data => {
                 if (data.success) {
                     console.log('Detection boxes saved');
+                    detectionBoxes = data.boxes || detectionBoxes;
                     renderDetectionBoxes();
+                    setBoxesDirty(false);
+                    // Force image refresh so detector output catches up on next cycle
+                    setTimeout(refreshImage, 400);
                 } else {
                     alert('Failed to save boxes: ' + (data.error || 'Unknown error'));
                 }
