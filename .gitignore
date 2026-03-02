@@ -1,7 +1,11 @@
 __pycache__
+**/__pycache__/
+*.pyc
 .venv
 .env
 output
 tests/output
 laser_monitor.log
 AGENTS.md
+*.egg-info/
+machine_history.json

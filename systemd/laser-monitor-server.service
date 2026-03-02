@@ -1,6 +1,6 @@
 [Unit]
 Description=Laser Monitor Web Dashboard Server
-Documentation=file:///home/hilton/laser-monitor/server/README.md
+Documentation=file:///home/hilton/laser-monitor/README.md
 After=network.target laser-monitor.service
 Wants=network.target
 BindsTo=laser-monitor.service

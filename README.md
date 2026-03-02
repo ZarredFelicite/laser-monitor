@@ -1,451 +1,145 @@
-# Laser Monitor - Single-Shot Detection System
+# Laser Monitor
 
-A simplified laser cutter monitoring system that captures one frame, performs AI-powered detection, saves results, and exits. Designed for integration with external monitoring systems or scheduled execution.
+Laser Monitor captures a frame, detects machine status from indicator regions, stores annotated outputs, and optionally serves a web dashboard for box editing and status visibility.
 
-## Features
+## What This Repo Includes
 
-### 🎯 **Multi-Modal Detection**
-- **Text Prompts**: Natural language descriptions ("red light", "laser indicator", "warning light")
-- **Visual Prompts**: AI-based detection using reference crops and bounding boxes
-- **Fixed Bounding Box**: Simple image analysis within predefined regions (no AI model needed)
-
-### 📷 **Universal Camera Support**
-- **Raspberry Pi Camera Modules**: Native support via picamera2/libcamera
-- **USB/Webcam Cameras**: OpenCV-based support for standard cameras
-- **Auto-Detection**: Automatically selects best available camera
-
-### ⚙️ **Python Configuration**
-- **Type-Safe Configs**: Dataclass-based configuration with full IDE support
-- **Visual Prompt Integration**: Direct import of visual prompt configurations
-- **Simple Setup**: Python-only configs, no JSON/YAML complexity
-
-### 📊 **Output & Logging**
-- **Annotated Images**: Saves detection results with bounding boxes
-- **JSON Detection Data**: Structured detection results with metadata
-- **Comprehensive Logging**: Configurable logging levels and file output
+- `cli.py` command line entrypoint (`setup`, `monitor`, `test`, `config`, `info`)
+- `laser_monitor.py` core monitoring/detection logic
+- `config/config.py` typed configuration + config loading
+- `server/app.py` Flask dashboard backend
+- `server/templates/dashboard.html` dashboard UI
+- `systemd/` service units + helper scripts for always-on deployments
 
 ## Quick Start
 
-### 1. Environment Setup
+### 1) Install dependencies
 
-**Using Nix (Recommended):**
+Preferred (Nix):
+
 ```bash
 nix develop
 ```
 
-**Traditional Python:**
+Python only:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Initial Setup
+### 2) (Optional) run setup helper
+
 ```bash
 python cli.py setup --interactive
 ```
 
-### 3. Run Detection
+### 3) Run one detection
+
 ```bash
-# Single detection with default config
 python cli.py monitor
+```
 
-# With custom config
-python cli.py monitor --config my_config.py
+### 4) Run continuous monitoring
 
-# With visual prompts
-python cli.py monitor --visual-prompt reference_crop.jpg
+```bash
+python cli.py monitor --continuous
+```
+
+## Dashboard
+
+Start dashboard server:
+
+```bash
+cd server
+python app.py
+```
+
+Open `http://localhost:5000`.
+
+Dashboard features:
+
+- latest detection image + overlay
+- detection box add/move/resize/delete
+- adjustable box movement/resize step (px)
+- save detection boxes to `web_ui.config.py`
+- machine status, uptime, and activity charts
+- notification settings (pause + recipients)
+
+## Detection Modes
+
+Set via config or `--detection-mode`:
+
+- `text`: text prompts
+- `visual`: visual prompt based
+- `bbox`: lightweight region analysis (no heavy model required)
+
+Examples:
+
+```bash
+python cli.py monitor --detection-mode bbox
+python cli.py monitor --config web_ui.config.py
+python cli.py test --camera 0
+python cli.py test --image tests/test1.jpg --config tests/test.config.py
 ```
 
 ## Configuration
 
-### Basic Configuration (`example_config.py`)
-```python
-from config import LaserMonitorConfig, CameraConfig, DetectionConfig
+The app supports Python config files and auto-detects visual prompt configs (`*.config.py`).
 
-config = LaserMonitorConfig(
-    model_path="pretrain/yoloe-11s-seg.pt",
-    
-    camera=CameraConfig(
-        camera_id=0,
-        camera_type=None,  # None=auto-detect, "pi"=Pi camera, "usb"=USB camera
-        resolution_width=1920,
-        resolution_height=1080
-    ),
-    
-    detection=DetectionConfig(
-        mode="text",  # "text", "visual", or "bbox"
-        confidence_threshold=0.3,
-        laser_keywords=["red light", "laser indicator", "warning light"]
-    )
-)
-```
+Common files:
 
-### Visual Prompt Configuration
+- `web_ui.config.py` dashboard-managed visual prompts
+- `example_brightness_config.py` brightness mode example
+- `tests/test.config.py` test fixture config
+
+Validate and inspect:
+
 ```bash
-# 1. Create visual prompts interactively
-python visual_prompt_selector.py reference_image.jpg
-
-# 2. This creates reference_image.config.py with visual prompts
-
-# 3. Use directly
-python cli.py monitor --config reference_image.config.py
+python cli.py config --validate web_ui.config.py
+python cli.py config --summary web_ui.config.py
 ```
 
-## Camera Support
+## Output Layout
 
-### Raspberry Pi Camera Module
-```python
-camera=CameraConfig(
-    camera_type="pi",  # Force Pi camera
-    camera_id=0
-)
-```
+Runtime artifacts are written to `output/`:
 
-### USB/Webcam
-```python
-camera=CameraConfig(
-    camera_type="usb",  # Force USB camera
-    camera_id=0
-)
-```
+- `output/screenshots/` annotated frames
+- `output/detections/` detection JSON
+- `output/machine_history.json` machine history used by dashboard
 
-### Auto-Detection (Recommended)
-```python
-camera=CameraConfig(
-    camera_type=None,  # Auto-detect best camera
-    camera_id=0
-)
-```
+## Systemd Deployment
 
-## Detection Modes
+The `systemd/` directory contains units and helper scripts:
 
-### Text Prompts
-```python
-detection=DetectionConfig(
-    mode="text",
-    laser_keywords=["red light", "indicator", "laser", "warning light"]
-)
-```
+- `laser-monitor.service`
+- `laser-monitor-server.service`
+- `laser-monitor.target`
+- `install-services.sh`
+- `manage-services.sh`
 
-### Visual Prompts
-```python
-detection=DetectionConfig(
-    mode="visual",
-    refer_image="/path/to/reference.jpg",
-    visual_prompts=[[0.1, 0.1, 0.3, 0.3]]  # Normalized bbox coordinates
-)
-```
+Typical flow:
 
-### Fixed Bounding Box (No AI Model)
-```python
-detection=DetectionConfig(
-    mode="bbox",
-    visual_prompts=[[0.1, 0.1, 0.3, 0.3], [0.7, 0.7, 0.9, 0.9]],  # Normalized coordinates
-    confidence_threshold=0.5
-)
-```
-
-This mode analyzes predefined regions using simple image processing:
-- **Red light detection**: High saturation in red hue range
-- **Green light detection**: High saturation in green hue range  
-- **Bright light detection**: High brightness values
-- **Off/dark detection**: Low brightness and variation
-
-## Output Structure
-
-```
-output/
-├── detections/
-│   └── detections_20250818_143022.json    # Detection results
-├── screenshots/
-│   └── detection_20250818_143022.jpg      # Annotated images
-└── visual_prompts/
-    └── reference_crop.jpg                  # Visual prompt images
-```
-
-### Detection JSON Format
-```json
-{
-  "timestamp": "2025-08-18T14:30:22.123456",
-  "detection_count": 2,
-  "detections": [
-    {
-      "timestamp": "2025-08-18T14:30:22.123456",
-      "confidence": 0.85,
-      "bbox": [100, 150, 200, 250],
-      "class_name": "red light",
-      "laser_status": "warning",
-      "zone_name": "control_panel"
-    }
-  ],
-  "config": {
-    "model_path": "pretrain/yoloe-11s-seg.pt",
-    "detection_mode": "text",
-    "confidence_threshold": 0.3,
-    "camera_info": {"type": "pi", "camera_id": 0}
-  }
-}
-```
-
-## CLI Commands
-
-### Monitor (Main Command)
 ```bash
-# Basic detection
-python cli.py monitor
-
-# With options
-python cli.py monitor \
-  --config my_config.py \
-  --camera 0 \
-  --confidence 0.4 \
-  --detection-mode visual \
-  --verbose
+cd systemd
+./install-services.sh
+./manage-services.sh start
+./manage-services.sh status
 ```
-
-### Setup
-```bash
-# Interactive setup
-python cli.py setup --interactive
-
-# Download specific models
-python cli.py setup --models s m l
-```
-
-### Testing
-```bash
-# Test camera
-python cli.py test --camera 0
-
-# Test specific camera type
-python cli.py test --camera 0 --camera-type pi
-
-# Test model loading
-python cli.py test --model pretrain/yoloe-11s-seg.pt
-
-# Test configuration
-python cli.py test --config my_config.py
-```
-
-### Configuration Management
-```bash
-# Create default config
-python cli.py config --create default_config.py
-
-# Validate config
-python cli.py config --validate my_config.py
-
-# Show config summary
-python cli.py config --summary my_config.py
-```
-
-### System Information
-```bash
-python cli.py info
-```
-
-## Bbox Mode (No AI Model Required)
-
-The bbox mode provides a lightweight alternative that doesn't require downloading large AI models. It uses simple image processing to analyze predefined regions:
-
-### Configuration
-```python
-detection=DetectionConfig(
-    mode="bbox",
-    visual_prompts=[
-        [0.1, 0.1, 0.3, 0.3],  # Top-left region
-        [0.7, 0.7, 0.9, 0.9]   # Bottom-right region
-    ],
-    confidence_threshold=0.5
-)
-```
-
-### Detection Logic
-- **Red Light**: Detects high saturation in red hue range (0-10° or 170-180°)
-- **Green Light**: Detects high saturation in green hue range (40-80°)
-- **Bright Light**: Detects high brightness values (>200)
-- **Off/Dark**: Detects low brightness with low variation (<50 brightness, <20 std dev)
-
-### Advantages
-- **No Model Download**: Works immediately without large file downloads
-- **Fast**: Simple image processing is very fast
-- **Low Memory**: Minimal memory usage
-- **Deterministic**: Consistent results based on color/brightness thresholds
-
-### Use Cases
-- **Simple indicator monitoring**: Basic on/off or color detection
-- **Resource-constrained devices**: When AI models are too large
-- **Quick prototyping**: Fast setup without model complexity
-- **Backup detection**: Fallback when AI models fail
-
-## Integration Examples
-
-### Cron Job (Periodic Monitoring)
-```bash
-# Run every 5 minutes
-*/5 * * * * cd /path/to/laser_monitor && python cli.py monitor --config production.py
-```
-
-### Systemd Service (On-Demand)
-```ini
-[Unit]
-Description=Laser Monitor Detection
-After=network.target
-
-[Service]
-Type=oneshot
-WorkingDirectory=/path/to/laser_monitor
-ExecStart=/usr/bin/python cli.py monitor --config production.py
-User=pi
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### External Trigger Script
-```bash
-#!/bin/bash
-# trigger_detection.sh
-
-cd /path/to/laser_monitor
-python cli.py monitor --config production.py
-
-# Check exit code
-if [ $? -eq 0 ]; then
-    echo "Detection completed successfully"
-    # Process results...
-else
-    echo "Detection failed"
-    # Handle error...
-fi
-```
-
-### Python Integration
-```python
-from laser_monitor import LaserMonitor
-from config import ConfigManager
-
-# Load config
-config_manager = ConfigManager("my_config.py")
-config = config_manager.load_config()
-
-# Run detection
-monitor = LaserMonitor(config)
-success = monitor.run()
-
-if success:
-    print("Detection completed")
-    # Process output files...
-```
-
-## Deployment
-
-### Raspberry Pi 5 (Recommended)
-1. **Install dependencies:**
-   ```bash
-   sudo apt update
-   sudo apt install python3-pip python3-venv
-   pip install -r requirements.txt
-   ```
-
-2. **Enable Pi camera:**
-   ```bash
-   sudo raspi-config
-   # Interface Options -> Camera -> Enable
-   ```
-
-3. **Configure for Pi camera:**
-   ```python
-   camera=CameraConfig(camera_type="pi", camera_id=0)
-   ```
-
-4. **Run detection:**
-   ```bash
-   python cli.py monitor --config pi_config.py
-   ```
-
-### Desktop/Workstation
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Configure for USB camera:**
-   ```python
-   camera=CameraConfig(camera_type="usb", camera_id=0)
-   ```
-
-3. **Create visual prompts:**
-   ```bash
-   python visual_prompt_selector.py reference.jpg
-   ```
-
-## Project Structure
-
-```
-laser_monitor/
-├── cli.py                    # Command-line interface
-├── laser_monitor.py          # Core detection logic (simplified)
-├── config.py                # Configuration system
-├── camera_manager.py         # Camera abstraction
-├── visual_prompt_selector.py # Interactive prompt creation
-├── setup_yoloe.py           # Model setup and download
-├── example_config.py         # Example configuration
-├── requirements.txt          # Python dependencies
-├── pretrain/                 # Model storage
-└── output/                   # Runtime outputs
-    ├── detections/           # Detection JSON files
-    ├── screenshots/          # Annotated images
-    └── visual_prompts/       # Visual prompt images
-```
-
-## Model Information
-
-### Supported Models
-- **yoloe-11s-seg.pt**: Small, fast model (~22MB)
-- **yoloe-11m-seg.pt**: Medium model (~50MB)
-- **yoloe-11l-seg.pt**: Large, accurate model (~100MB)
-- **yoloe-v8s/m/l-seg.pt**: YOLOv8-based variants
-
-### Model Selection
-- **Pi 5**: Use `yoloe-11s-seg.pt` for best performance
-- **Desktop**: Use `yoloe-11m-seg.pt` or `yoloe-11l-seg.pt` for accuracy
-- **GPU Available**: Any model size works well
 
 ## Troubleshooting
 
-### Camera Issues
-```bash
-# Test camera detection
-python cli.py info
+- camera check: `python cli.py test --camera 0`
+- config check: `python cli.py config --validate <config.py>`
+- model check: `python cli.py test --model pretrain/yoloe-11s-seg.pt`
+- system info: `python cli.py info`
 
-# Test specific camera
-python cli.py test --camera 0 --camera-type pi
-```
+If detections are off:
 
-### Model Issues
-```bash
-# Re-download models
-python cli.py setup --models s
+- lower confidence threshold
+- verify box placement in dashboard
+- try `bbox` mode for deterministic ROI behavior
 
-# Test model loading
-python cli.py test --model pretrain/yoloe-11s-seg.pt
-```
+## Notes
 
-### Configuration Issues
-```bash
-# Validate config
-python cli.py config --validate my_config.py
-
-# Check config summary
-python cli.py config --summary my_config.py
-```
-
-### Low Detection Accuracy
-1. **Lower confidence threshold**: `confidence_threshold=0.2`
-2. **Use visual prompts**: More precise than text prompts
-3. **Better lighting**: Ensure good illumination
-4. **Larger model**: Use `yoloe-11m-seg.pt` or `yoloe-11l-seg.pt`
-
-## License
-
-This project is designed for laser cutter safety monitoring and automation. Use responsibly and ensure proper safety measures are in place.
+- `web_ui.config.py` is expected to change frequently while tuning boxes.
+- `server/notification_settings.json` and `output/` data are runtime state and not intended as stable source files.
