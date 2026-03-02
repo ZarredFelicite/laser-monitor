@@ -449,58 +449,96 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+        }
+
+        .controls-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .step-size-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: #495057;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .step-size-control input {
+            width: 64px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .step-size-unit {
+            color: #666;
+            font-size: 12px;
+            font-weight: normal;
         }
         
         .controls-info {
             color: #666;
-            font-style: italic;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
         
         .add-box-button {
             background-color: #28a745;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
         }
         
         .add-box-button:hover {
             background-color: #218838;
         }
-        
+
         .detection-box-item {
             background-color: #f8f9fa;
-            border: 2px solid #dee2e6;
+            border: 1px solid #dee2e6;
             border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 10px;
+            margin-bottom: 10px;
         }
         
         .box-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 1px solid #dee2e6;
         }
         
         .box-title {
             font-weight: bold;
             color: #333;
-            font-size: 1.1em;
+            font-size: 0.98em;
         }
         
         .box-coords {
             color: #666;
-            font-size: 0.9em;
+            font-size: 0.8em;
             font-family: monospace;
         }
         
@@ -508,10 +546,10 @@
             background-color: #dc3545;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 5px 8px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .delete-box-button:hover {
@@ -521,12 +559,12 @@
         .box-controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 8px;
         }
         
         .control-group {
             background-color: white;
-            padding: 12px;
+            padding: 8px;
             border-radius: 4px;
             border: 1px solid #dee2e6;
         }
@@ -534,24 +572,24 @@
         .control-group-title {
             font-weight: bold;
             color: #555;
-            margin-bottom: 10px;
-            font-size: 0.95em;
+            margin-bottom: 6px;
+            font-size: 0.85em;
         }
         
         .control-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 6px;
         }
         
         .control-button {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 8px;
+            padding: 5px 6px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             transition: background-color 0.2s;
         }
@@ -566,16 +604,40 @@
         
         @media (max-width: 768px), (max-aspect-ratio: 1/1) {
             .box-controls {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
             
             .controls-header {
-                flex-direction: column;
-                align-items: stretch;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .controls-actions {
+                width: auto;
+                justify-content: flex-start;
+            }
+
+            .step-size-control {
+                width: auto;
+                justify-content: flex-start;
             }
             
             .add-box-button {
-                width: 100%;
+                width: auto;
+            }
+
+            .control-buttons {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .box-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .control-buttons {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
     </style>
@@ -683,8 +745,14 @@
         <div class="card" style="grid-column: 1 / -1;">
             <h2>🎯 Detection Box Controls</h2>
             <div class="controls-header">
-                <button class="add-box-button" onclick="addDetectionBox()">➕ Add Detection Box</button>
-                <button id="save-boxes-button" class="save-button" style="width: auto; padding: 10px 20px;" onclick="saveDetectionBoxes()" disabled>💾 Save Detection Boxes</button>
+                <div class="controls-actions">
+                    <button class="add-box-button" onclick="addDetectionBox()">➕ Add Box</button>
+                    <button id="save-boxes-button" class="save-button" style="width: auto; padding: 6px 10px; font-size: 13px;" onclick="saveDetectionBoxes()" disabled>💾 Save</button>
+                    <label for="step-size-input" class="step-size-control">Step
+                        <input id="step-size-input" type="number" min="1" max="100" step="1" value="5">
+                        <span class="step-size-unit">px</span>
+                    </label>
+                </div>
                 <div id="boxes-dirty-status" class="controls-info">No unsaved changes</div>
             </div>
             <div id="detection-boxes-container">
@@ -730,11 +798,10 @@
                 drawDetectionBoxes();
             }, 200);
         }
-        
+
         function drawDetectionBoxes() {
             const img = document.getElementById('detection-image');
             const canvas = document.getElementById('detection-overlay');
-            const container = document.getElementById('image-container');
             
             if (!img.complete || img.naturalWidth === 0) {
                 // Image not loaded yet
@@ -1003,7 +1070,18 @@
         let detectionBoxes = [];
         let imageDimensions = [1920, 1080];
         let boxesDirty = false;
-        const STEP_SIZE = 5; // Pixels to move/resize per button click
+
+        function getStepSize() {
+            const input = document.getElementById('step-size-input');
+            if (!input) {
+                return 5;
+            }
+
+            const parsed = Number.parseInt(input.value, 10);
+            const normalized = Number.isFinite(parsed) ? Math.max(1, Math.min(100, parsed)) : 5;
+            input.value = normalized;
+            return normalized;
+        }
 
         function setBoxesDirty(dirty) {
             boxesDirty = dirty;
@@ -1105,7 +1183,7 @@
             if (index < 0 || index >= detectionBoxes.length) return;
             
             const box = [...detectionBoxes[index]]; // Clone the box
-            const delta = STEP_SIZE * direction;
+            const delta = getStepSize() * direction;
             
             if (axis === 'x') {
                 // Move x1 and x2
@@ -1126,7 +1204,7 @@
             if (index < 0 || index >= detectionBoxes.length) return;
             
             const box = [...detectionBoxes[index]]; // Clone the box
-            const delta = STEP_SIZE * direction;
+            const delta = getStepSize() * direction;
             
             if (dimension === 'width') {
                 // Adjust x2 (right edge)
@@ -1298,6 +1376,12 @@
                 notificationToggle.addEventListener('change', function() {
                     updateNotificationStatus(this.checked);
                 });
+            }
+
+            const stepSizeInput = document.getElementById('step-size-input');
+            if (stepSizeInput) {
+                stepSizeInput.addEventListener('change', getStepSize);
+                stepSizeInput.addEventListener('blur', getStepSize);
             }
             
             // Close modal when clicking outside
