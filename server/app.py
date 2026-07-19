@@ -6,6 +6,9 @@ Serves latest detection image and machine stats with manual refresh
 
 import os
 import json
+import tempfile
+import math
+from numbers import Real
 from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, render_template, jsonify, send_file, request
@@ -95,6 +98,9 @@ def machine_stats():
             'total_machines': 0,
             'active_machines': 0,
             'inactive_machines': 0,
+            'unknown_machines': 0,
+            'overall_uptime_1h': None,
+            'machine_uptimes_1h': {},
             'hourly_activity': [],
             'error': None
         }
@@ -115,6 +121,7 @@ def machine_stats():
         # Calculate current status from all machines
         active_count = 0
         inactive_count = 0
+        unknown_count = 0
         latest_timestamp = None
         
         for machine_id, machine_data in history_data.items():
@@ -130,8 +137,10 @@ def machine_stats():
                 # Count active/inactive machines
                 if latest_entry['status'] == 'active':
                     active_count += 1
-                else:
+                elif latest_entry['status'] == 'inactive':
                     inactive_count += 1
+                else:
+                    unknown_count += 1
         
         # Calculate true uptime for the last hour
         overall_uptime, machine_uptimes = calculate_overall_uptime(history_data, hours_back=1)
@@ -140,8 +149,13 @@ def machine_stats():
             'total_machines': len(history_data),
             'active_machines': active_count,
             'inactive_machines': inactive_count,
+            'unknown_machines': unknown_count,
             'last_update': latest_timestamp.isoformat() if latest_timestamp else None,
-            'current_status': 'active' if active_count > 0 else 'inactive',
+            'current_status': (
+                'active' if active_count > 0
+                else 'unknown' if unknown_count > 0
+                else 'inactive'
+            ),
             'overall_uptime_1h': overall_uptime,
             'machine_uptimes_1h': machine_uptimes
         })
@@ -154,49 +168,51 @@ def machine_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def calculate_machine_uptime(entries, start_time, end_time):
-    """Calculate true uptime percentage for a machine within a time period"""
-    if not entries:
-        return 0.0
-    
-    # Filter entries within the time period and sort by timestamp
+def _calculate_machine_uptime_and_coverage(entries, start_time, end_time):
+    """Return uptime over trusted intervals and their duration in seconds."""
+    parsed = sorted(
+        (
+            datetime.fromisoformat(entry['timestamp']),
+            entry.get('status', 'unknown'),
+        )
+        for entry in entries
+        if datetime.fromisoformat(entry['timestamp']) <= end_time
+    )
+    current_status = 'unknown'
     period_entries = []
-    for entry in entries:
-        entry_time = datetime.fromisoformat(entry['timestamp'])
-        if start_time <= entry_time <= end_time:
-            period_entries.append({
-                'timestamp': entry_time,
-                'status': entry['status']
-            })
-    
-    if not period_entries:
-        return 0.0
-    
-    period_entries.sort(key=lambda e: e['timestamp'])
-    
-    # Calculate active time by tracking state transitions
-    total_active_seconds = 0
-    current_status = period_entries[0]['status']
+    for timestamp, status in parsed:
+        if timestamp <= start_time:
+            current_status = status
+        else:
+            period_entries.append((timestamp, status))
+
+    total_active_seconds = 0.0
+    total_known_seconds = 0.0
     last_timestamp = start_time
-    
-    for entry in period_entries:
-        # If we were active, add the time since last timestamp
+    for timestamp, status in period_entries:
+        elapsed = (timestamp - last_timestamp).total_seconds()
+        if current_status in {'active', 'inactive'}:
+            total_known_seconds += elapsed
+            if current_status == 'active':
+                total_active_seconds += elapsed
+        current_status = status
+        last_timestamp = timestamp
+
+    elapsed = (end_time - last_timestamp).total_seconds()
+    if current_status in {'active', 'inactive'}:
+        total_known_seconds += elapsed
         if current_status == 'active':
-            total_active_seconds += (entry['timestamp'] - last_timestamp).total_seconds()
-        
-        current_status = entry['status']
-        last_timestamp = entry['timestamp']
-    
-    # Handle the final period until end_time
-    if current_status == 'active':
-        total_active_seconds += (end_time - last_timestamp).total_seconds()
-    
-    # Calculate percentage
-    total_period_seconds = (end_time - start_time).total_seconds()
-    if total_period_seconds == 0:
-        return 0.0
-    
-    return (total_active_seconds / total_period_seconds) * 100
+            total_active_seconds += elapsed
+
+    if total_known_seconds <= 0:
+        return 0.0, 0.0
+    return (total_active_seconds / total_known_seconds) * 100, total_known_seconds
+
+
+def calculate_machine_uptime(entries, start_time, end_time):
+    """Calculate uptime while excluding unknown intervals."""
+    uptime, _ = _calculate_machine_uptime_and_coverage(entries, start_time, end_time)
+    return uptime
 
 def calculate_overall_uptime(history_data, hours_back=1):
     """Calculate overall uptime and per-machine uptime for the last N hours"""
@@ -209,12 +225,20 @@ def calculate_overall_uptime(history_data, hours_back=1):
     
     for machine_id, machine_data in history_data.items():
         entries = machine_data.get('entries', [])
-        uptime = calculate_machine_uptime(entries, start_time, now)
+        uptime, known_seconds = _calculate_machine_uptime_and_coverage(
+            entries, start_time, now
+        )
+        if known_seconds <= 0:
+            machine_uptimes[machine_id] = None
+            continue
         machine_uptimes[machine_id] = round(uptime, 1)
         total_uptime_sum += uptime
         machine_count += 1
     
-    overall_uptime = round(total_uptime_sum / machine_count, 1) if machine_count > 0 else 0.0
+    overall_uptime = (
+        round(total_uptime_sum / machine_count, 1)
+        if machine_count > 0 else None
+    )
     
     return overall_uptime, machine_uptimes
 
@@ -301,20 +325,62 @@ def load_web_ui_config():
         return {'boxes': [], 'refer_image': None, 'image_dimensions': [1920, 1080]}
 
 def save_web_ui_config(boxes, refer_image=None, image_dimensions=None):
-    """Save detection boxes to web_ui.config.py in the format expected by ConfigManager"""
+    """Validate and atomically save dashboard detection boxes."""
     if image_dimensions is None:
         image_dimensions = [1920, 1080]
+    if (
+        not isinstance(image_dimensions, (list, tuple))
+        or len(image_dimensions) != 2
+        or not all(
+            isinstance(value, Real)
+            and not isinstance(value, bool)
+            and math.isfinite(float(value))
+            and value > 0
+            for value in image_dimensions
+        )
+    ):
+        print("Error saving web_ui config: invalid image dimensions")
+        return False
+    if not isinstance(boxes, list):
+        print("Error saving web_ui config: boxes must be a list")
+        return False
+    for index, box in enumerate(boxes):
+        if (
+            not isinstance(box, (list, tuple))
+            or len(box) != 4
+            or not all(
+                isinstance(value, Real)
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+                for value in box
+            )
+        ):
+            print(f"Error saving web_ui config: invalid box {index}")
+            return False
+        normalized = all(value <= 1.0 for value in box)
+        max_x = 1.0 if normalized else image_dimensions[0]
+        max_y = 1.0 if normalized else image_dimensions[1]
+        if not (
+            0 <= box[0] < box[2] <= max_x
+            and 0 <= box[1] < box[3] <= max_y
+        ):
+            print(f"Error saving web_ui config: out-of-range box {index}")
+            return False
     
-    # Determine refer_image - try to find the latest screenshot if not provided
+    # Prefer the unannotated frame so overlays cannot corrupt drift matching.
     if refer_image is None:
         try:
-            image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))
-            if image_files:
-                latest_image = max(image_files, key=lambda f: f.stat().st_mtime)
-                refer_image = str(latest_image.absolute())
+            raw_reference = OUTPUT_DIR / "latest_raw.jpg"
+            if raw_reference.exists():
+                refer_image = str(raw_reference.absolute())
             else:
-                refer_image = ""
-        except:
+                image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))
+                if image_files:
+                    latest_image = max(image_files, key=lambda f: f.stat().st_mtime)
+                    refer_image = str(latest_image.absolute())
+                else:
+                    refer_image = ""
+        except OSError:
             refer_image = ""
     
     # Convert pixel coordinates to normalized coordinates (0-1) for storage
@@ -365,11 +431,23 @@ metadata = {{
 }}
 '''
     
+    temporary_file = None
     try:
-        with open(WEB_UI_CONFIG_FILE, 'w') as f:
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=WEB_UI_CONFIG_FILE.parent,
+            prefix=".web-ui-config-",
+            suffix=".py",
+        )
+        temporary_file = Path(temporary_name)
+        with os.fdopen(descriptor, 'w') as f:
             f.write(config_content)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary_file, WEB_UI_CONFIG_FILE)
         return True
     except Exception as e:
+        if temporary_file is not None:
+            temporary_file.unlink(missing_ok=True)
         print(f"Error saving web_ui config: {e}")
         return False
 
@@ -399,7 +477,7 @@ def update_detection_boxes():
         current_config = load_web_ui_config()
         
         # Save config
-        if save_web_ui_config(boxes, current_config['refer_image'], current_config['image_dimensions']):
+        if save_web_ui_config(boxes, None, current_config['image_dimensions']):
             return jsonify({'success': True, 'boxes': boxes})
         else:
             return jsonify({'error': 'Failed to save config'}), 500
@@ -417,7 +495,7 @@ def delete_detection_box(box_index):
         if 0 <= box_index < len(boxes):
             deleted_box = boxes.pop(box_index)
             
-            if save_web_ui_config(boxes, config_data['refer_image'], config_data['image_dimensions']):
+            if save_web_ui_config(boxes, None, config_data['image_dimensions']):
                 return jsonify({'success': True, 'deleted': deleted_box, 'boxes': boxes})
             else:
                 return jsonify({'error': 'Failed to save config'}), 500

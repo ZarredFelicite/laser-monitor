@@ -24,7 +24,7 @@ class MachineExpectationWarning(Warning):
 def setup_brightness_monitor():
     # Load the brightness threshold config
     cm = ConfigManager()
-    cfg_path = Path("tests/test_brightness.config.py").resolve()
+    cfg_path = Path("tests/brightness_test_config.py").resolve()
     config = cm.load_config(str(cfg_path))
 
     # Force bbox mode and brightness settings

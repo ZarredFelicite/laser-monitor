@@ -94,6 +94,30 @@ def test_picamera2_reuses_one_persistent_stream(monkeypatch):
     assert fake.close_count == 1
 
 
+def test_picamera2_capture_failure_restarts_stream_on_next_read(monkeypatch):
+    install_fake_picamera2(monkeypatch)
+    camera = Picamera2Camera(camera_id=0)
+    assert camera.open()
+    assert camera.read()[0]
+    fake = FakePicamera2.instances[0]
+    original_capture = fake.capture_array
+
+    def fail_capture(stream):
+        raise RuntimeError("simulated capture failure")
+
+    fake.capture_array = fail_capture
+    assert camera.read() == (False, None)
+    assert fake.stop_count == 1
+
+    fake.capture_array = original_capture
+    assert camera.read()[0]
+    assert fake.start_count == 2
+
+    fake.capture_array = lambda stream: None
+    assert camera.read() == (False, None)
+    assert fake.stop_count == 2
+
+
 def test_rpicam_fallback_uses_camera_id_and_one_buffer():
     camera = RpicamStillCamera(camera_id=3)
     camera._rpicam_path = '/usr/bin/rpicam-still'

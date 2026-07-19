@@ -10,6 +10,8 @@ import importlib.util
 import sys
 import logging
 import copy
+import math
+from numbers import Real
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
 from dataclasses import dataclass, field
@@ -70,6 +72,22 @@ class DetectionConfig:
     # Brightness threshold mode (alternative to color-based detection)
     use_brightness_threshold: bool = True  # Enable brightness-based detection instead of color analysis
     brightness_threshold_ratios: List[List[float]] = field(default_factory=lambda: [[1.7, 2.2]])  # Per-ROI, per-section ratios [[top_ratio, mid_ratio], ...] for each visual_prompt (optimized: 92.9% accuracy)
+
+    # Drift-tolerant bbox mode. Registration uses stable scene structure while
+    # classification compares each light with its local, per-frame background.
+    robust_detection_enabled: bool = True
+    drift_tracking_enabled: bool = True
+    drift_max_total_pixels: float = 50.0
+    drift_max_step_pixels: float = 8.0
+    drift_min_global_response: float = 0.04
+    drift_min_local_score: float = 0.20
+    drift_local_search_margin: int = 4
+    drift_hold_cycles: int = 2
+    classification_ambiguity_margin: float = 0.08
+    capture_burst_frames: int = 3
+    capture_burst_interval_seconds: float = 0.10
+    state_transition_confirmations: int = 2
+    unknown_hold_cycles: int = 3
 
 
 @dataclass
@@ -398,14 +416,98 @@ config = {repr(self.config)}
         if not (0.0 <= self.config.detection.nms_threshold <= 1.0):
             errors.append("NMS threshold must be between 0.0 and 1.0")
 
+        detection = self.config.detection
+
+        def finite_number(value):
+            return isinstance(value, Real) and math.isfinite(float(value))
+
+        drift_limits = (
+            detection.drift_max_total_pixels,
+            detection.drift_max_step_pixels,
+        )
+        if not all(finite_number(value) and value >= 0 for value in drift_limits):
+            errors.append("Drift limits must be finite and non-negative")
+        if not (
+            finite_number(detection.drift_min_global_response)
+            and 0.0 <= detection.drift_min_global_response <= 1.0
+        ):
+            errors.append("Global registration response must be between 0.0 and 1.0")
+        if not (
+            finite_number(detection.drift_min_local_score)
+            and -1.0 <= detection.drift_min_local_score <= 1.0
+        ):
+            errors.append("Local registration score must be between -1.0 and 1.0")
+        if not isinstance(detection.capture_burst_frames, int) or detection.capture_burst_frames < 1:
+            errors.append("Capture burst must contain at least one frame")
+        if not (
+            finite_number(detection.capture_burst_interval_seconds)
+            and detection.capture_burst_interval_seconds >= 0
+        ):
+            errors.append("Capture burst interval must be finite and non-negative")
+        if not isinstance(detection.drift_local_search_margin, int) or detection.drift_local_search_margin < 0:
+            errors.append("Local search margin must be a non-negative integer")
+        if not isinstance(detection.drift_hold_cycles, int) or detection.drift_hold_cycles < 0:
+            errors.append("Drift hold cycles must be a non-negative integer")
+        if not isinstance(detection.unknown_hold_cycles, int) or detection.unknown_hold_cycles < 0:
+            errors.append("Unknown hold cycles must be a non-negative integer")
+        if not (
+            finite_number(detection.classification_ambiguity_margin)
+            and 0.0 <= detection.classification_ambiguity_margin <= 1.0
+        ):
+            errors.append("Classification ambiguity margin must be between 0.0 and 1.0")
+        if not isinstance(detection.state_transition_confirmations, int) or detection.state_transition_confirmations < 1:
+            errors.append("State transition confirmations must be at least one")
+        ratios_config = detection.brightness_threshold_ratios
+        if not isinstance(ratios_config, (list, tuple)):
+            errors.append("Brightness thresholds must be a list of pairs")
+        else:
+            for index, ratios in enumerate(ratios_config):
+                if (
+                    not isinstance(ratios, (list, tuple))
+                    or len(ratios) != 2
+                    or not all(finite_number(value) and value > 0 for value in ratios)
+                ):
+                    errors.append(f"Brightness threshold pair {index} must contain two positive finite numbers")
+        prompts = detection.visual_prompts
+        if prompts is not None and not isinstance(prompts, (list, tuple)):
+            errors.append("Visual prompts must be a list of bounding boxes")
+        elif prompts:
+            for index, bbox in enumerate(prompts):
+                if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+                    errors.append(f"Visual prompt {index} must have 4 coordinates")
+                elif not all(finite_number(value) for value in bbox):
+                    errors.append(f"Visual prompt {index} coordinates must be finite numbers")
+                elif not (
+                    0.0 <= bbox[0] < bbox[2] <= 1.0
+                    and 0.0 <= bbox[1] < bbox[3] <= 1.0
+                ):
+                    errors.append(f"Visual prompt {index} must be normalized and ordered")
+        fallback_bbox = detection.visual_prompt_bbox
+        if fallback_bbox is not None:
+            if not isinstance(fallback_bbox, (list, tuple)) or len(fallback_bbox) != 4:
+                errors.append("Visual prompt fallback must have 4 coordinates")
+            elif not all(finite_number(value) for value in fallback_bbox):
+                errors.append("Visual prompt fallback coordinates must be finite numbers")
+            elif not (
+                0.0 <= fallback_bbox[0] < fallback_bbox[2] <= 1.0
+                and 0.0 <= fallback_bbox[1] < fallback_bbox[3] <= 1.0
+            ):
+                errors.append("Visual prompt fallback must be normalized and ordered")
+
         # Validate visual prompt path if specified
         if (self.config.detection.visual_prompt_path and
             not Path(self.config.detection.visual_prompt_path).exists()):
             errors.append(f"Visual prompt file not found: {self.config.detection.visual_prompt_path}")
 
         # Validate refer image if specified
-        if (self.config.detection.refer_image and
-            not Path(self.config.detection.refer_image).exists()):
+        if (
+            self.config.detection.refer_image
+            and not Path(self.config.detection.refer_image).exists()
+            and not (
+                self.config.detection.mode == "bbox"
+                and self.config.detection.robust_detection_enabled
+            )
+        ):
             errors.append(f"Reference image not found: {self.config.detection.refer_image}")
 
         # Validate output directory

@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 import json
-import warnings
 
 import pytest
 try:
@@ -12,11 +11,6 @@ except Exception as e:
 
 from config.config import ConfigManager
 from laser_monitor import LaserMonitor
-
-
-class MachineExpectationWarning(Warning):
-    """Non-fatal expectation mismatch for secondary machines"""
-    pass
 
 
 @pytest.fixture(scope="function")
@@ -62,7 +56,7 @@ def _validate_detection_dict(det, width, height):
     assert 0 <= y1 < y2 <= height, f"bbox y out of range: {det['bbox']} height={height}"
 
     # status value sanity
-    assert det["laser_status"] in {"active", "inactive", "normal"}
+    assert det["laser_status"] in {"active", "inactive", "normal", "unknown"}
 
 
 def test_detections_on_sample_images(monitor_from_test_config):
@@ -105,26 +99,9 @@ def test_detections_on_sample_images(monitor_from_test_config):
         exp_machines = expected.get("machines", {})
         assert exp_machines, f"No 'machines' mapping in expected file: {expected_path}"
 
-        # Compare only machines present in expected file
         for mid, exp_status in exp_machines.items():
-            if mid == "machine_0":
-                assert mid in actual_status, f"Missing detection for {mid} in {img_path.name}"
-                assert actual_status[mid] == exp_status, (
-                    f"Status mismatch for {mid} in {img_path.name}: "
-                    f"expected {exp_status}, got {actual_status.get(mid)}"
-                )
-            elif mid == "machine_1":
-                # Only warn for secondary machine mismatches
-                if mid not in actual_status:
-                    warnings.warn(
-                        f"Missing detection for {mid} in {img_path.name}",
-                        category=MachineExpectationWarning,
-                    )
-                elif actual_status[mid] != exp_status:
-                    warnings.warn(
-                        f"Status mismatch for {mid} in {img_path.name}: expected {exp_status}, got {actual_status[mid]}",
-                        category=MachineExpectationWarning,
-                    )
-            else:
-                # Ignore any other machine entries silently
-                continue
+            assert mid in actual_status, f"Missing detection for {mid} in {img_path.name}"
+            assert actual_status[mid] == exp_status, (
+                f"Status mismatch for {mid} in {img_path.name}: "
+                f"expected {exp_status}, got {actual_status.get(mid)}"
+            )

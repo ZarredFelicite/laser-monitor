@@ -33,7 +33,7 @@ class MachineExpectationWarning(Warning):
 def setup_monitor_with_ratios(ratios: List[List[float]]) -> LaserMonitor:
     """Create monitor with specific threshold ratios"""
     cm = ConfigManager()
-    cfg_path = Path("tests/test_brightness.config.py").resolve()
+    cfg_path = Path("tests/brightness_test_config.py").resolve()
     config = cm.load_config(str(cfg_path))
     
     # Force bbox mode and brightness settings

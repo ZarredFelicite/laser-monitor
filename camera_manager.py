@@ -292,10 +292,15 @@ class Picamera2Camera(CameraInterface):
         try:
             frame = self._camera.capture_array('main')
             if frame is None:
+                self.logger.error(
+                    "Picamera2 returned an empty frame; restarting stream on next read"
+                )
+                self._stop_capture()
                 return False, None
             return True, frame.copy()
         except Exception as exc:
-            self.logger.error(f"Picamera2 capture failed: {exc}")
+            self.logger.error(f"Picamera2 capture failed: {exc}; restarting stream on next read")
+            self._stop_capture()
             return False, None
 
     def set_property(self, prop: str, value: Any) -> bool:

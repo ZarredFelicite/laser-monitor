@@ -13,6 +13,8 @@ import sys
 import json
 import logging
 import time
+import math
+from numbers import Real
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -30,6 +32,11 @@ try:
     from config.config import LaserMonitorConfig
     from camera_manager import CameraManager
     from image_uploader import ImageUploader
+    from light_detection import (
+        AdaptiveLightClassifier,
+        DriftLocalizer,
+        TemporalStateTracker,
+    )
     import cv2
     import numpy as np
 except ImportError as e:
@@ -103,7 +110,7 @@ class MachineHistory:
         # Update last active/inactive times
         if status == "active":
             self.last_active_time = entry.timestamp
-        else:
+        elif status == "inactive":
             self.last_inactive_time = entry.timestamp
         
         # Clean up old entries (keep only last 7 days)
@@ -750,6 +757,13 @@ class LaserMonitor:
         self.logger = self._setup_logging()
         self.camera_manager = CameraManager()
         self.model = None
+        self.roi_localizer = None
+        self.light_classifier = None
+        self._robust_detector_signature = None
+        self.state_tracker = TemporalStateTracker(
+            confirmations=self.config.detection.state_transition_confirmations,
+            unknown_hold_cycles=self.config.detection.unknown_hold_cycles,
+        )
         
         # Create output directories
         self.output_dir = Path(self.config.output.output_dir)
@@ -763,6 +777,13 @@ class LaserMonitor:
         self.machine_histories: Dict[str, MachineHistory] = {}
         self.history_file = self.output_dir / 'machine_history.json'
         self.load_machine_history()
+        for machine_id, history in self.machine_histories.items():
+            trusted_entries = [
+                entry for entry in history.entries
+                if entry.status in {"active", "inactive"}
+            ]
+            if trusted_entries:
+                self.state_tracker.seed(machine_id, trusted_entries[-1].class_name)
         
         # Alert systems
         self.email_alert_manager = EmailAlertManager(config)
@@ -978,6 +999,115 @@ class LaserMonitor:
         else:
             self.logger.error("Visual mode selected but no visual prompts configured")
             return []
+
+    def _ensure_robust_detector(self, frame: np.ndarray) -> bool:
+        """Initialize drift tracking from the configured reference or current frame."""
+        prompts = self.config.detection.visual_prompts or []
+        signature = (
+            tuple(tuple(box) for box in prompts),
+            self.config.detection.refer_image,
+            frame.shape[:2],
+        )
+        if signature == self._robust_detector_signature:
+            return self.roi_localizer is not None and self.light_classifier is not None
+
+        reference = None
+        if self.config.detection.refer_image:
+            reference = cv2.imread(self.config.detection.refer_image)
+        if reference is None:
+            self.logger.warning(
+                "Robust detector reference image unavailable; using the current frame "
+                "as the drift anchor"
+            )
+            reference = frame.copy()
+
+        detection = self.config.detection
+        try:
+            self.roi_localizer = DriftLocalizer(
+                reference=reference,
+                normalized_boxes=prompts,
+                max_total_shift=detection.drift_max_total_pixels,
+                max_step_shift=detection.drift_max_step_pixels,
+                min_global_response=detection.drift_min_global_response,
+                min_local_score=detection.drift_min_local_score,
+                local_search_margin=detection.drift_local_search_margin,
+                max_hold_frames=detection.drift_hold_cycles,
+            )
+            self.light_classifier = AdaptiveLightClassifier(
+                threshold_ratios=detection.brightness_threshold_ratios,
+                ambiguity_margin=detection.classification_ambiguity_margin,
+            )
+            self._robust_detector_signature = signature
+            self.logger.info(
+                f"Robust light detector initialized for {len(prompts)} regions"
+            )
+            return True
+        except Exception as exc:
+            self.logger.error(f"Failed to initialize robust light detector: {exc}")
+            self.roi_localizer = None
+            self.light_classifier = None
+            return False
+
+    def _detect_robust_bboxes(self, frame: np.ndarray) -> List[DetectionResult]:
+        if not self._ensure_robust_detector(frame):
+            return []
+
+        if self.config.detection.drift_tracking_enabled:
+            localization = self.roi_localizer.locate(frame)
+            boxes = localization.boxes
+            localized_flags = localization.valid
+            scores = localization.scores
+            source = localization.source
+            shift = localization.shift
+            global_response = localization.global_response
+        else:
+            height, width = frame.shape[:2]
+            boxes = []
+            for bbox in self.config.detection.visual_prompts:
+                x1, y1, x2, y2 = [
+                    int(value * dimension)
+                    for value, dimension in zip(
+                        bbox, (width, height, width, height)
+                    )
+                ]
+                boxes.append((x1, y1, x2, y2))
+            localized_flags = [True] * len(boxes)
+            scores = [1.0] * len(boxes)
+            source = "fixed"
+            shift = (0.0, 0.0)
+            global_response = 1.0
+
+        timestamp = datetime.now().isoformat()
+        frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        detections = []
+        for index, box in enumerate(boxes):
+            localized = localized_flags[index]
+            observation = self.light_classifier.classify(
+                frame, box, index, localized=localized, frame_gray=frame_gray
+            )
+            local_score = scores[index]
+            confidence = observation.confidence * (
+                0.6 + 0.4 * max(0.0, min(1.0, local_score))
+            )
+            extras = dict(observation.extras)
+            extras.update({
+                "machine_id": f"machine_{index}",
+                "localization_valid": localized,
+                "localization_score": local_score,
+                "localization_source": source,
+                "global_shift": list(shift),
+                "global_registration_response": global_response,
+            })
+            detections.append(DetectionResult(
+                timestamp=timestamp,
+                confidence=confidence,
+                bbox=list(box),
+                class_name=observation.class_name,
+                laser_status=observation.laser_status,
+                zone_name=f"machine_{index}",
+                extras=extras,
+            ))
+        return detections
     
     def _detect_with_fixed_bboxes(self, frame: np.ndarray) -> List[DetectionResult]:
         """Detect using fixed bounding boxes (naive approach)"""
@@ -989,6 +1119,9 @@ class LaserMonitor:
             else:
                 self.logger.error("Bbox mode selected but no visual_prompts configured (and no visual_prompt_bbox fallback)")
                 return []
+
+        if getattr(self.config.detection, 'robust_detection_enabled', False):
+            return self._detect_robust_bboxes(frame)
         
         detections = []
         timestamp = datetime.now().isoformat()
@@ -1403,24 +1536,34 @@ class LaserMonitor:
             
             # Draw detection-specific scores based on detection mode
             if hasattr(detection, 'extras') and detection.extras:
-                # Check if using brightness threshold mode
-                if getattr(self.config.detection, 'use_brightness_threshold', False):
-                    # Brightness threshold mode - show per-region brightness values
+                if "localization_score" in detection.extras:
+                    top_ratio = detection.extras.get("top_ratio", 0)
+                    mid_ratio = detection.extras.get("mid_ratio", 0)
+                    score = detection.extras.get("localization_score", 0)
+                    source = detection.extras.get("localization_source", "unknown")
+                    cv2.putText(
+                        annotated_frame,
+                        f"Top/Mid: {top_ratio:.2f}/{mid_ratio:.2f}",
+                        (x1, y1 - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1,
+                    )
+                    cv2.putText(
+                        annotated_frame,
+                        f"Track: {score:.2f} {source}",
+                        (x1, y1 - 45),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1,
+                    )
+                elif getattr(self.config.detection, 'use_brightness_threshold', False):
                     top_brightness = detection.extras.get('top_brightness', 0)
                     mid_brightness = detection.extras.get('mid_brightness', 0)
                     top_bright_ratio = detection.extras.get('top_bright_ratio', 0)
                     mid_bright_ratio = detection.extras.get('mid_bright_ratio', 0)
-                    
-                    # Top region brightness (working indicator)
                     top_text = f"Top: {top_brightness:.1f} ({top_bright_ratio:.3f})"
-                    cv2.putText(annotated_frame, top_text, (x1, y1 - 30), 
+                    cv2.putText(annotated_frame, top_text, (x1, y1 - 30),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
-                    
-                    # Middle region brightness (machine on indicator)
                     mid_text = f"Mid: {mid_brightness:.1f} ({mid_bright_ratio:.3f})"
-                    cv2.putText(annotated_frame, mid_text, (x1, y1 - 45), 
+                    cv2.putText(annotated_frame, mid_text, (x1, y1 - 45),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
-                    
                 else:
                     # Color-based mode - show red/orange ratios
                     red_ratio = detection.extras.get('red_ratio', 0)
@@ -1455,6 +1598,7 @@ class LaserMonitor:
         # Detection count and overall status
         active_count = sum(1 for d in detections if d.laser_status == "active")
         inactive_count = sum(1 for d in detections if d.laser_status == "inactive")
+        unknown_count = sum(1 for d in detections if d.laser_status == "unknown")
         total_count = len(detections)
         
         cv2.putText(annotated_frame, f"Detections: {total_count} (Active: {active_count}, Inactive: {inactive_count})", 
@@ -1464,9 +1608,12 @@ class LaserMonitor:
         if active_count > 0:
             overall_status = "MACHINE ACTIVE"
             status_color = (0, 255, 0)  # Green
-        elif total_count > 0:
+        elif inactive_count > 0:
             overall_status = "MACHINE INACTIVE"
             status_color = (0, 165, 255)  # Orange
+        elif unknown_count > 0:
+            overall_status = "VISION UNKNOWN"
+            status_color = (128, 128, 128)
         else:
             overall_status = "NO DETECTIONS"
             status_color = (128, 128, 128)  # Gray
@@ -1476,9 +1623,17 @@ class LaserMonitor:
         
         # Thresholds info - show different info based on detection mode
         if getattr(self.config.detection, 'use_brightness_threshold', False):
-            # Brightness threshold mode - show threshold info
-            # Get brightness values from first detection if available
-            if detections and hasattr(detections[0], 'extras') and detections[0].extras:
+            if (
+                detections
+                and detections[0].extras.get("localization_score") is not None
+            ):
+                extras = detections[0].extras
+                shift = extras.get("global_shift", [0, 0])
+                threshold_text = (
+                    f"Adaptive local ratios | Drift: {shift[0]:+.1f}, {shift[1]:+.1f}px "
+                    f"| Vision: {'OK' if extras.get('vision_known') else 'UNKNOWN'}"
+                )
+            elif detections and hasattr(detections[0], 'extras') and detections[0].extras:
                 bottom_brightness = detections[0].extras.get('bottom_brightness', 0)
                 top_threshold = detections[0].extras.get('top_threshold', 0)
                 mid_threshold = detections[0].extras.get('mid_threshold', 0)
@@ -1486,7 +1641,7 @@ class LaserMonitor:
                 mid_ratio = detections[0].extras.get('mid_ratio', 1.4)
                 threshold_text = f"Bottom: {bottom_brightness:.1f} | T: {top_threshold:.1f}({top_ratio:.1f}x) M: {mid_threshold:.1f}({mid_ratio:.1f}x)"
             else:
-                threshold_text = f"Brightness mode | Per-ROI ratios configured"
+                threshold_text = "Brightness mode | Per-ROI ratios configured"
             cv2.putText(annotated_frame, threshold_text, 
                        (10, status_y_start + 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
         else:
@@ -1502,6 +1657,12 @@ class LaserMonitor:
         filename = f"detection_{timestamp}.jpg"
         filepath = self.screenshots_dir / filename
         
+        if getattr(self.config.detection, "robust_detection_enabled", False):
+            raw_path = self.output_dir / "latest_raw.jpg"
+            temporary_raw_path = self.output_dir / "latest_raw.tmp.jpg"
+            if cv2.imwrite(str(temporary_raw_path), frame):
+                os.replace(temporary_raw_path, raw_path)
+
         # Use helper method to draw overlays
         annotated_frame = self.draw_detection_overlays(frame, detections)
         
@@ -1676,67 +1837,195 @@ class LaserMonitor:
         """Save machine history to file"""
         try:
             data = {machine_id: history.to_dict() for machine_id, history in self.machine_histories.items()}
-            with open(self.history_file, 'w') as f:
+            temporary_path = self.history_file.with_suffix(".json.tmp")
+            with open(temporary_path, 'w') as f:
                 json.dump(data, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporary_path, self.history_file)
             self.logger.debug(f"Machine history saved to {self.history_file}")
         except Exception as e:
             self.logger.error(f"Failed to save machine history: {e}")
     
-    def update_machine_status(self, detections: List[DetectionResult]):
-        """Update machine status history based on detections"""
-        # For now, treat each detection as a separate machine
-        # In the future, this could be enhanced to group detections by zone or other criteria
-        
-        if not detections:
-            # No detections - update machine_0 as inactive
-            machine_id = "machine_0"
-            if machine_id not in self.machine_histories:
-                self.machine_histories[machine_id] = MachineHistory(machine_id=machine_id)
-            
-            self.machine_histories[machine_id].add_entry(
-                status="inactive",
-                class_name="machine_off",
-                confidence=0.0,
-                details={"reason": "no_detections"}
+    def _aggregate_detection_burst(
+        self, bursts: List[List[DetectionResult]]
+    ) -> List[DetectionResult]:
+        """Aggregate repeated captures without retaining all image frames."""
+        if not bursts:
+            return []
+        machine_ids = {
+            detection.zone_name or f"machine_{index}"
+            for burst in bursts
+            for index, detection in enumerate(burst)
+        }
+        machine_ids.update(
+            f"machine_{index}"
+            for index, _ in enumerate(self.config.detection.visual_prompts or [])
+        )
+        machine_ids = sorted(machine_ids)
+        aggregated = []
+        for machine_id in machine_ids:
+            samples = [
+                detection
+                for burst in bursts
+                for index, detection in enumerate(burst)
+                if (detection.zone_name or f"machine_{index}") == machine_id
+            ]
+            known_samples = [
+                sample for sample in samples
+                if sample.extras.get("vision_known", True)
+            ]
+            required = len(bursts) // 2 + 1
+            if len(known_samples) < required:
+                representative = samples[-1] if samples else DetectionResult(
+                    timestamp=datetime.now().isoformat(),
+                    confidence=0.0,
+                    bbox=[0, 0, 1, 1],
+                    class_name="machine_unknown",
+                    laser_status="unknown",
+                    zone_name=machine_id,
+                    extras={"vision_known": False},
+                )
+                class_name = "machine_unknown"
+                laser_status = "unknown"
+                confidence = 0.0
+                known = False
+                agreement = len(known_samples) / max(1, len(bursts))
+            else:
+                counts = {}
+                for sample in known_samples:
+                    counts[sample.class_name] = counts.get(sample.class_name, 0) + 1
+                class_name = max(counts, key=lambda name: (counts[name], name))
+                matching = [s for s in known_samples if s.class_name == class_name]
+                representative = matching[-1]
+                laser_status = "active" if class_name == "machine_active" else "inactive"
+                agreement = len(matching) / len(bursts)
+                confidence = float(np.median([s.confidence for s in matching])) * agreement
+                known = len(matching) >= required
+                if not known:
+                    class_name = "machine_unknown"
+                    laser_status = "unknown"
+                    confidence = 0.0
+
+            boxes = np.array([sample.bbox for sample in samples], dtype=np.float32)
+            bbox = (
+                [int(round(value)) for value in np.median(boxes, axis=0)]
+                if boxes.size else list(representative.bbox)
             )
-            
-            # Update alert managers with status change
-            history = self.machine_histories.get(machine_id)
-            self.email_alert_manager.update_machine_status(machine_id, "inactive", history)
-            self.sms_alert_manager.update_machine_status(machine_id, "inactive", history)
-        else:
-            # Process each detection
-            for i, detection in enumerate(detections):
-                machine_id = f"machine_{i}"
-                
-                if machine_id not in self.machine_histories:
-                    self.machine_histories[machine_id] = MachineHistory(machine_id=machine_id)
-                
-                # Determine status based on laser_status
-                status = "active" if detection.laser_status == "active" else "inactive"
-                
-                self.machine_histories[machine_id].add_entry(
-                    status=status,
-                    class_name=detection.class_name,
-                    confidence=detection.confidence,
+            extras = dict(representative.extras)
+            extras.update({
+                "vision_known": known,
+                "burst_frames": len(bursts),
+                "burst_captured_frames": len(samples),
+                "burst_known_frames": len(known_samples),
+                "burst_agreement": agreement,
+                "raw_class_name": class_name,
+            })
+            aggregated.append(DetectionResult(
+                timestamp=datetime.now().isoformat(),
+                confidence=confidence,
+                bbox=bbox,
+                class_name=class_name,
+                laser_status=laser_status,
+                zone_name=machine_id,
+                extras=extras,
+            ))
+        return aggregated
+
+    def _stabilize_detections(
+        self, detections: List[DetectionResult]
+    ) -> List[DetectionResult]:
+        """Apply cycle-level hysteresis while preserving raw vision health."""
+        for index, detection in enumerate(detections):
+            machine_id = detection.zone_name or f"machine_{index}"
+            raw_class = detection.class_name
+            raw_known = bool(detection.extras.get("vision_known", True))
+            stable_class, trusted, tracker_state = self.state_tracker.update(
+                machine_id, raw_class, raw_known
+            )
+            detection.extras["raw_class_name"] = raw_class
+            detection.extras["stable_class_name"] = stable_class
+            detection.extras["tracker_state"] = tracker_state
+            detection.extras["state_trusted"] = trusted
+            detection.class_name = stable_class
+            if stable_class == "machine_unknown":
+                detection.laser_status = "unknown"
+                detection.confidence = 0.0
+            else:
+                detection.laser_status = (
+                    "active" if stable_class == "machine_active" else "inactive"
+                )
+                if not raw_known:
+                    detection.confidence = 0.0
+        return detections
+
+    def update_machine_status(self, detections: List[DetectionResult]):
+        """Update machine status history based on trusted, stable detections."""
+        if not detections:
+            machine_ids = [
+                f"machine_{index}"
+                for index, _ in enumerate(self.config.detection.visual_prompts or [None])
+            ]
+            for machine_id in machine_ids:
+                history = self.machine_histories.setdefault(
+                    machine_id, MachineHistory(machine_id=machine_id)
+                )
+                history.add_entry(
+                    status="unknown",
+                    class_name="machine_unknown",
+                    confidence=0.0,
+                    details={"reason": "no_detections"},
+                )
+            self.logger.warning("No detections; machine state left unchanged")
+            return
+
+        for index, detection in enumerate(detections):
+            machine_id = detection.zone_name or f"machine_{index}"
+            history = self.machine_histories.setdefault(
+                machine_id, MachineHistory(machine_id=machine_id)
+            )
+            vision_known = bool(detection.extras.get("vision_known", True))
+            state_trusted = bool(detection.extras.get("state_trusted", True))
+            if not vision_known or not state_trusted or detection.laser_status == "unknown":
+                history.add_entry(
+                    status="unknown",
+                    class_name="machine_unknown",
+                    confidence=0.0,
                     details={
                         "bbox": detection.bbox,
                         "zone": detection.zone_name,
-                        "extras": detection.extras
-                    }
+                        "extras": detection.extras,
+                    },
                 )
-                
-                # Update alert managers with status change
-                history = self.machine_histories[machine_id]
-                self.email_alert_manager.update_machine_status(machine_id, status, history)
-                self.sms_alert_manager.update_machine_status(machine_id, status, history)
-                
-                self.logger.info(f"Updated {machine_id}: {status} ({detection.class_name}, conf={detection.confidence:.3f})")
+                self.logger.warning(
+                    f"Vision state unknown for {machine_id}; preserving prior trusted state"
+                )
+                continue
+
+            status = "active" if detection.laser_status == "active" else "inactive"
+            history.add_entry(
+                status=status,
+                class_name=detection.class_name,
+                confidence=detection.confidence,
+                details={
+                    "bbox": detection.bbox,
+                    "zone": detection.zone_name,
+                    "extras": detection.extras,
+                },
+            )
+            self.email_alert_manager.update_machine_status(machine_id, status, history)
+            self.sms_alert_manager.update_machine_status(machine_id, status, history)
+            self.logger.info(
+                f"Updated {machine_id}: {status} "
+                f"({detection.class_name}, conf={detection.confidence:.3f})"
+            )
     
     def check_inactive_alerts(self):
         """Check for machines that have been inactive too long and send email/SMS alerts"""
         alerts = []
         for machine_id, history in self.machine_histories.items():
+            if history.entries and history.entries[-1].status == "unknown":
+                continue
             if history.is_inactive_too_long(threshold_minutes=self.inactive_alert_threshold):
                 duration = history.get_inactive_duration()
                 duration_minutes = duration.total_seconds() / 60
@@ -1779,15 +2068,49 @@ class LaserMonitor:
     def run_single_cycle(self) -> bool:
         """Run a single detection cycle"""
         try:
-            # Capture frame
-            frame = self.capture_frame()
+            robust_bbox_mode = (
+                self.config.detection.mode == "bbox"
+                and self.config.detection.robust_detection_enabled
+            )
+            camera_info = self.camera_manager.get_camera_info() or {}
+            burst_frames = 1
+            if robust_bbox_mode and camera_info.get("backend") == "picamera2":
+                burst_frames = min(5, max(
+                    1, int(self.config.detection.capture_burst_frames)
+                ))
+
+            frame = None
+            burst_detections = []
+            for burst_index in range(burst_frames):
+                captured = self.capture_frame()
+                if captured is None:
+                    if robust_bbox_mode:
+                        burst_detections.append([])
+                    continue
+                frame = captured
+                burst_detections.append(self.detect_objects(captured))
+                if burst_index + 1 < burst_frames:
+                    time.sleep(self.config.detection.capture_burst_interval_seconds)
+
             if frame is None:
+                if robust_bbox_mode:
+                    detections = self._stabilize_detections(
+                        self._aggregate_detection_burst(burst_detections)
+                    )
+                else:
+                    detections = []
+                self.update_machine_status(detections)
+                self.save_machine_history()
+                self.logger.error(
+                    "All frame captures failed; recorded vision state as unknown"
+                )
                 return False
-            
-            # Perform detection
-            detections = self.detect_objects(frame)
-            
-            # Update machine status history
+
+            if robust_bbox_mode:
+                detections = self._aggregate_detection_burst(burst_detections)
+                detections = self._stabilize_detections(detections)
+            else:
+                detections = burst_detections[-1]
             self.update_machine_status(detections)
             
             # Save results
@@ -1942,10 +2265,36 @@ class LaserMonitor:
             
             visual_data = load_visual_prompts(str(web_ui_config_path))
             
-            # Update detection config
-            self.config.detection.refer_image = visual_data.get('refer_image')
             visual_prompts = visual_data.get('visual_prompts') or []
-            
+            prompts_valid = isinstance(visual_prompts, (list, tuple))
+            if prompts_valid:
+                for bbox in visual_prompts:
+                    if (
+                        not isinstance(bbox, (list, tuple))
+                        or len(bbox) != 4
+                        or not all(
+                            isinstance(value, Real)
+                            and not isinstance(value, bool)
+                            and math.isfinite(float(value))
+                            for value in bbox
+                        )
+                        or not (
+                            0.0 <= bbox[0] < bbox[2] <= 1.0
+                            and 0.0 <= bbox[1] < bbox[3] <= 1.0
+                        )
+                    ):
+                        prompts_valid = False
+                        break
+            if not prompts_valid:
+                self._last_config_reload_time = current_mtime
+                self.logger.error(
+                    "Rejected invalid web UI visual prompts; keeping last-known-good boxes"
+                )
+                return False
+
+            # Apply only after the complete candidate has passed validation.
+            self.config.detection.refer_image = visual_data.get('refer_image')
+            visual_prompts = [list(bbox) for bbox in visual_prompts]
             if len(visual_prompts) == 1:
                 self.config.detection.visual_prompt_bbox = visual_prompts[0]
                 self.config.detection.visual_prompts = visual_prompts

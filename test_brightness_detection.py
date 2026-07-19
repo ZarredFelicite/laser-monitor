@@ -21,7 +21,7 @@ def test_brightness_detection():
     
     # Load brightness threshold config
     cm = ConfigManager()
-    cfg_path = Path("tests/test_brightness.config.py").resolve()
+    cfg_path = Path("tests/brightness_test_config.py").resolve()
     config = cm.load_config(str(cfg_path))
 
     # Force settings for testing
@@ -109,7 +109,7 @@ def compare_modes():
     color_monitor = LaserMonitor(color_config)
     
     # Test with brightness-based detection  
-    brightness_config = cm.load_config("tests/test_brightness.config.py")
+    brightness_config = cm.load_config("tests/brightness_test_config.py")
     brightness_config.detection.mode = "bbox"
     brightness_config.detection.indicator_mode = False
     brightness_config.detection.use_brightness_threshold = True

@@ -5,6 +5,14 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-20: Drift-Tolerant Indicator Detection
+
+- Added bounded global/local ROI registration against a raw reference frame.
+- Added local background-normalized light classification and marginal-evidence rejection.
+- Added three-frame burst voting, temporal state hysteresis, and explicit unknown health states.
+- Unknown observations preserve the last trusted state and cannot trigger inactivity alerts.
+- Added atomic history/config writes and strict drift/lighting regression tests.
+
 ### 2026-07-20: Persistent Raspberry Pi Camera Backend
 
 - Added a persistent Picamera2 backend that opens and configures libcamera once, then reuses one capture stream.

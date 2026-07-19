@@ -134,6 +134,20 @@ Install `python3-picamera2` and the current rpicam/libcamera packages through Ra
 
 Explicit backends are `picamera2`, `rpicam`, and `usb`. The legacy `pi` value prefers Picamera2 and falls back only to rpicam—it never silently switches to USB.
 
+## Robust indicator detection
+
+BBox mode registers each frame against a reference image, refines every light ROI using structural edges around the light housing, and rejects implausible movement. Classification uses per-ROI light-to-background ratios plus local contrast/chroma evidence, so exposure and ambient-light changes have less effect. Three-frame bursts suppress capture noise, while cycle-level hysteresis prevents one marginal reading from changing machine state.
+
+Important safeguards:
+
+- Drift is bounded per cycle and relative to the calibration image.
+- Low-quality localization produces `unknown`, not a false inactive state.
+- Unknown periods do not trigger inactivity alerts or count as downtime.
+- `output/latest_raw.jpg` is maintained as an unannotated calibration source.
+- History and dashboard ROI config writes are atomic.
+
+Tune the `drift_*`, `classification_ambiguity_margin`, `capture_burst_*`, and `state_transition_*` fields in `DetectionConfig` when commissioning. Keep each ROI tight around one stack light while leaving visible housing/context around it in the reference image.
+
 ## Troubleshooting
 
 - camera check: `python cli.py test --camera 0`

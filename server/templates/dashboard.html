@@ -727,6 +727,10 @@
                     <div class="stat-label">Currently Inactive</div>
                 </div>
                 <div class="stat-item">
+                    <div id="unknown-machines" class="stat-value">-</div>
+                    <div class="stat-label">Vision Unknown</div>
+                </div>
+                <div class="stat-item">
                     <div id="uptime-percentage" class="stat-value">-</div>
                     <div class="stat-label">True Uptime (1h)</div>
                 </div>
@@ -936,10 +940,12 @@
             document.getElementById('total-machines').textContent = data.total_machines;
             document.getElementById('active-machines').textContent = data.active_machines;
             document.getElementById('inactive-machines').textContent = data.inactive_machines;
+            document.getElementById('unknown-machines').textContent = data.unknown_machines || 0;
             
             // Display true uptime percentage
-            const trueUptime = data.overall_uptime_1h || 0;
-            document.getElementById('uptime-percentage').textContent = trueUptime + '%';
+            const trueUptime = data.overall_uptime_1h;
+            document.getElementById('uptime-percentage').textContent =
+                trueUptime === null ? 'Unknown' : trueUptime + '%';
             
             // Update per-machine uptime details
             updateMachineUptimes(data.machine_uptimes_1h || {});
@@ -959,7 +965,7 @@
                 item.className = 'machine-uptime-item';
                 item.innerHTML = `
                     <div class="machine-id">${machineId}</div>
-                    <div class="machine-uptime-value">${uptime}%</div>
+                    <div class="machine-uptime-value">${uptime === null ? 'Unknown' : uptime + '%'}</div>
                 `;
                 container.appendChild(item);
             }
