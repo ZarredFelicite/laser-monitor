@@ -214,9 +214,11 @@ class DriftLocalizer:
             box, score = self._refine_box(frame, anchor, accepted)
             boxes.append(box)
             scores.append(score)
+            # A strong local structural match is sufficient even when broad
+            # phase correlation is confused by a large lighting change. The
+            # local search remains tightly bounded around the configured ROI.
             valid.append(
-                source != "anchor"
-                and score >= self.min_local_score
+                score >= self.min_local_score
                 and float(np.linalg.norm(accepted)) <= self.max_total_shift
             )
 
@@ -321,17 +323,34 @@ class AdaptiveLightClassifier:
         top_margin = top_ratio / max(top_threshold, 0.01) - 1.0
         mid_margin = mid_ratio / max(mid_threshold, 0.01) - 1.0
 
-        def active(ratio: float, threshold: float, margin: float, features: Dict[str, float]) -> bool:
+        def active(
+            ratio: float,
+            threshold: float,
+            margin: float,
+            features: Dict[str, float],
+            allow_strong_emission: bool = False,
+        ) -> bool:
+            chroma = max(features["red_dominance"], features["warm_dominance"])
+            # Strong localized amber emission remains trustworthy when
+            # daylight raises the unlit bottom segment and depresses ratios.
+            # Restrict this fallback to the middle lamp: unlit red lenses can
+            # produce similarly strong red highlights in direct daylight.
+            if allow_strong_emission and features["ring_z"] >= 9.5 and chroma >= 40.0:
+                return True
             if ratio < threshold:
                 return False
             if margin >= self.ambiguity_margin:
                 return True
-            return features["ring_z"] >= 1.5 and max(
-                features["red_dominance"], features["warm_dominance"]
-            ) >= 10.0
+            return features["ring_z"] >= 1.5 and chroma >= 10.0
 
         top_active = active(top_ratio, top_threshold, top_margin, top_features)
-        mid_active = active(mid_ratio, mid_threshold, mid_margin, mid_features)
+        mid_active = active(
+            mid_ratio,
+            mid_threshold,
+            mid_margin,
+            mid_features,
+            allow_strong_emission=True,
+        )
         if top_active and mid_active:
             class_name, laser_status = "machine_active", "active"
         elif top_active:

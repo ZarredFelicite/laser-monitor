@@ -69,6 +69,36 @@ def test_tracking_and_classification_survive_drift_and_relighting(
     assert observed == expected
 
 
+def test_local_match_recovers_when_global_registration_is_ambiguous():
+    reference = np.zeros((120, 160, 3), dtype=np.uint8)
+    cv2.rectangle(reference, (45, 20), (75, 100), (180, 180, 180), 2)
+    cv2.line(reference, (25, 60), (95, 60), (255, 255, 255), 2)
+    localizer = DriftLocalizer(
+        reference,
+        [[40 / 160, 30 / 120, 80 / 160, 90 / 120]],
+        min_global_response=2.0,
+    )
+
+    result = localizer.locate(reference.copy())
+
+    assert result.source == "anchor"
+    assert result.scores[0] >= localizer.min_local_score
+    assert result.valid == [True]
+
+
+def test_strong_amber_light_survives_daylight_depressed_ratio():
+    frame = np.full((100, 100, 3), 100, dtype=np.uint8)
+    box = (40, 20, 60, 80)
+    frame[40:60, 40:60] = (0, 180, 255)
+    classifier = AdaptiveLightClassifier([[1.7, 2.2]])
+
+    observation = classifier.classify(frame, box, 0, localized=True)
+
+    assert observation.extras["mid_ratio"] < 2.2
+    assert observation.class_name == "machine_on_only"
+    assert observation.known
+
+
 def test_tracker_rejects_implausible_total_drift(visual_config):
     reference = cv2.imread("tests/test1.jpg")
     shifted = _translate_and_relight(reference, dx=100, dy=0)
