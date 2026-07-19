@@ -335,7 +335,12 @@ class AdaptiveLightClassifier:
             # daylight raises the unlit bottom segment and depresses ratios.
             # Restrict this fallback to the middle lamp: unlit red lenses can
             # produce similarly strong red highlights in direct daylight.
-            if allow_strong_emission and features["ring_z"] >= 9.5 and chroma >= 40.0:
+            if (
+                allow_strong_emission
+                and features["p90"] >= 190.0
+                and features["ring_z"] >= 8.5
+                and chroma >= 40.0
+            ):
                 return True
             if ratio < threshold:
                 return False
@@ -344,6 +349,14 @@ class AdaptiveLightClassifier:
             return features["ring_z"] >= 1.5 and chroma >= 10.0
 
         top_active = active(top_ratio, top_threshold, top_margin, top_features)
+        if not top_active:
+            # A lit red lamp has both a bright core and strong red dominance;
+            # this excludes the dim red-lens highlights seen in daylight.
+            top_active = (
+                top_features["p90"] >= 180.0
+                and top_features["ring_z"] >= 6.0
+                and top_features["red_dominance"] >= 60.0
+            )
         mid_active = active(
             mid_ratio,
             mid_threshold,

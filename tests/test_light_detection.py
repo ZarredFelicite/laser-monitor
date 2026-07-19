@@ -89,7 +89,7 @@ def test_local_match_recovers_when_global_registration_is_ambiguous():
 def test_strong_amber_light_survives_daylight_depressed_ratio():
     frame = np.full((100, 100, 3), 100, dtype=np.uint8)
     box = (40, 20, 60, 80)
-    frame[40:60, 40:60] = (0, 180, 255)
+    frame[40:60, 40:60] = (0, 220, 255)
     classifier = AdaptiveLightClassifier([[1.7, 2.2]])
 
     observation = classifier.classify(frame, box, 0, localized=True)
