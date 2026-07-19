@@ -9,10 +9,11 @@ Usage:
 """
 
 # Reference image path
-refer_image = r"/home/hilton/laser-monitor/images/test.jpg"
+refer_image = r"output/latest_raw.jpg"
 
 # Visual prompt bounding boxes (normalized coordinates: x1, y1, x2, y2)
-visual_prompts = [[0.6473958333333333, 0.4185185185185185, 0.6588541666666666, 0.46574074074074073], [0.05677083333333333, 0.44814814814814813, 0.0625, 0.47314814814814815]]
+# Recommissioned against the unannotated persistent-camera frame on 2026-07-20.
+visual_prompts = [[0.6270833333333333, 0.4148148148148148, 0.6364583333333333, 0.47129629629629627], [0.025, 0.4444444444444444, 0.0375, 0.4777777777777778]]
 
 # Image dimensions (for reference)
 image_dimensions = {
