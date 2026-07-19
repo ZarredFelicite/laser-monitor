@@ -17,8 +17,10 @@ from dataclasses import dataclass, field
 
 @dataclass
 class CameraConfig:
-    camera_id: int = 1
-    camera_type: Optional[str] = "pi"  # "usb", "pi", or None for auto-detect
+    camera_id: int = 0
+    # "pi" prefers persistent Picamera2 with rpicam fallback. Explicit backends
+    # are "picamera2", "rpicam", and "usb"; None enables auto-detection.
+    camera_type: Optional[str] = "pi"
     resolution_width: int = 1920
     resolution_height: int = 1080
     fps: int = 30
@@ -377,8 +379,17 @@ config = {repr(self.config)}
         if self.config.camera.camera_id < 0:
             errors.append("Camera ID must be non-negative")
 
+        valid_camera_types = {None, "pi", "picamera2", "rpicam", "usb"}
+        if self.config.camera.camera_type not in valid_camera_types:
+            errors.append(
+                "Camera type must be pi, picamera2, rpicam, usb, or None"
+            )
+
         if self.config.camera.resolution_width <= 0 or self.config.camera.resolution_height <= 0:
             errors.append("Camera resolution must be positive")
+
+        if self.config.camera.fps <= 0:
+            errors.append("Camera FPS must be positive")
 
         # Validate detection settings
         if not (0.0 <= self.config.detection.confidence_threshold <= 1.0):

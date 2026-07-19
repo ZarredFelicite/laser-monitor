@@ -5,6 +5,14 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-20: Persistent Raspberry Pi Camera Backend
+
+- Added a persistent Picamera2 backend that opens and configures libcamera once, then reuses one capture stream.
+- Uses one camera buffer to reduce CMA pressure and avoids launching `rpicam-still` every detection cycle.
+- Keeps `rpicam-still` as a fallback, now with explicit camera ID selection and one buffer.
+- Raspberry Pi camera ID now defaults to `0`; explicit Pi requests never silently switch to USB.
+- Added camera lifecycle, buffer, fallback, and configuration tests in `tests/test_camera_manager.py`.
+
 ### 2025-11-12: Web UI Detection Box Controls
 
 - Added web dashboard UI for managing detection boxes (visual prompts) at `server/templates/dashboard.html`.

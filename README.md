@@ -126,6 +126,14 @@ cd systemd
 ./manage-services.sh status
 ```
 
+## Raspberry Pi camera architecture
+
+For `camera_type="pi"`, the monitor uses the OS-provided Picamera2/libcamera bindings and keeps one camera stream open for the monitor lifetime. This avoids repeatedly starting `rpicam-still` and reduces contiguous camera-memory pressure. The stream uses one capture buffer; `rpicam-still` remains a fallback.
+
+Install `python3-picamera2` and the current rpicam/libcamera packages through Raspberry Pi OS rather than PyPI. Use system Python, or a virtual environment created with `--system-site-packages`, so the matching libcamera bindings remain available.
+
+Explicit backends are `picamera2`, `rpicam`, and `usb`. The legacy `pi` value prefers Picamera2 and falls back only to rpicam—it never silently switches to USB.
+
 ## Troubleshooting
 
 - camera check: `python cli.py test --camera 0`

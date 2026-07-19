@@ -857,7 +857,10 @@ class LaserMonitor:
                 'saturation': self.config.camera.saturation,
             }
             
-            self.camera_manager.configure_camera(camera_settings)
+            if not self.camera_manager.configure_camera(camera_settings):
+                self.logger.error("Failed to configure camera")
+                self.camera_manager.close_camera()
+                return False
             
             # Log camera info
             camera_info = self.camera_manager.get_camera_info()
@@ -866,6 +869,7 @@ class LaserMonitor:
             
         except Exception as e:
             self.logger.error(f"Failed to open camera: {e}")
+            self.camera_manager.close_camera()
             return False
     
     def capture_frame(self) -> Optional[np.ndarray]:

@@ -169,8 +169,173 @@ class USBCamera(CameraInterface):
         }
 
 
-class PiCamera(CameraInterface):
-    """Raspberry Pi camera implementation that shells out to rpicam-still.
+class Picamera2Camera(CameraInterface):
+    """Persistent Raspberry Pi camera backend using Picamera2/libcamera."""
+
+    _SUPPORTED_PROPERTIES = {
+        'width', 'height', 'fps', 'auto_exposure', 'exposure',
+        'brightness', 'contrast', 'saturation', 'warmup_frames'
+    }
+
+    def __init__(self, camera_id: int = 0):
+        self.camera_id = camera_id
+        self.logger = logging.getLogger(__name__)
+        self._camera = None
+        self._picamera2_class = None
+        self._config = {'warmup_frames': 2}
+        self._started = False
+        self.available = False
+
+        try:
+            from picamera2 import Picamera2
+            self._picamera2_class = Picamera2
+            self.available = True
+        except (ImportError, RuntimeError) as exc:
+            self.logger.info(f"Picamera2 unavailable: {exc}")
+
+    def open(self) -> bool:
+        if not self.available or self._picamera2_class is None:
+            return False
+
+        try:
+            self._camera = self._picamera2_class(self.camera_id)
+            self.logger.info(f"Picamera2 camera {self.camera_id} opened")
+            return True
+        except Exception as exc:
+            self.logger.error(f"Failed to open Picamera2 camera {self.camera_id}: {exc}")
+            self._camera = None
+            return False
+
+    def _controls(self) -> Dict[str, Any]:
+        controls = {'AeEnable': bool(self._config.get('auto_exposure', True))}
+
+        exposure = self._config.get('exposure')
+        if not controls['AeEnable'] and isinstance(exposure, (int, float)) and exposure > 0:
+            controls['ExposureTime'] = int(exposure)
+
+        fps = self._config.get('fps')
+        if isinstance(fps, (int, float)) and fps > 0:
+            frame_duration = int(1_000_000 / fps)
+            if not controls['AeEnable'] and isinstance(exposure, (int, float)) and exposure > 0:
+                frame_duration = max(frame_duration, int(exposure))
+            controls['FrameDurationLimits'] = (frame_duration, frame_duration)
+
+        brightness = self._config.get('brightness')
+        if isinstance(brightness, (int, float)):
+            # Legacy config uses 0.5 as neutral; Picamera2 uses 0.0 as neutral.
+            controls['Brightness'] = max(-1.0, min(1.0, (float(brightness) - 0.5) * 2.0))
+
+        for prop, control in (('contrast', 'Contrast'), ('saturation', 'Saturation')):
+            value = self._config.get(prop)
+            if isinstance(value, (int, float)):
+                controls[control] = max(0.0, float(value))
+
+        return controls
+
+    def _start(self) -> bool:
+        if self._camera is None:
+            return False
+        if self._started:
+            return True
+
+        width = int(self._config.get('width', 1920))
+        height = int(self._config.get('height', 1080))
+        try:
+            camera_config = self._camera.create_still_configuration(
+                # Picamera2's RGB888 memory layout is BGR byte order for OpenCV.
+                main={'size': (width, height), 'format': 'RGB888'},
+                raw=None,
+                buffer_count=1,
+            )
+            self._camera.configure(camera_config)
+            controls = self._controls()
+            if controls:
+                self._camera.set_controls(controls)
+            self._camera.start()
+            self._started = True
+
+            warmup_frames = max(0, int(self._config.get('warmup_frames', 2)))
+            for _ in range(warmup_frames):
+                self._camera.capture_array('main')
+
+            self.logger.info(
+                f"Picamera2 camera {self.camera_id} started persistently at "
+                f"{width}x{height} with one capture buffer"
+            )
+            return True
+        except Exception as exc:
+            self.logger.error(f"Failed to start Picamera2 camera: {exc}")
+            self._stop_capture()
+            return False
+
+    def _stop_capture(self) -> None:
+        if self._camera is not None and self._started:
+            try:
+                self._camera.stop()
+            except Exception as exc:
+                self.logger.warning(f"Failed to stop Picamera2 camera cleanly: {exc}")
+        self._started = False
+
+    def close(self) -> None:
+        self._stop_capture()
+        if self._camera is not None:
+            try:
+                self._camera.close()
+            except Exception as exc:
+                self.logger.warning(f"Failed to close Picamera2 camera cleanly: {exc}")
+        self._camera = None
+
+    def read(self) -> Tuple[bool, Optional[np.ndarray]]:
+        if self._camera is None or not self._start():
+            return False, None
+
+        try:
+            frame = self._camera.capture_array('main')
+            if frame is None:
+                return False, None
+            return True, frame.copy()
+        except Exception as exc:
+            self.logger.error(f"Picamera2 capture failed: {exc}")
+            return False, None
+
+    def set_property(self, prop: str, value: Any) -> bool:
+        alias_map = {
+            'resolution_width': 'width',
+            'resolution_height': 'height',
+            'exposure_value': 'exposure',
+        }
+        key = alias_map.get(prop, prop)
+        if key not in self._SUPPORTED_PROPERTIES:
+            return False
+        if self._started and self._config.get(key) != value:
+            self.logger.warning(f"Picamera2 property {key} changed; restarting capture stream")
+            self._stop_capture()
+        self._config[key] = value
+        return True
+
+    def get_property(self, prop: str) -> Any:
+        alias_map = {
+            'resolution_width': 'width',
+            'resolution_height': 'height',
+            'exposure_value': 'exposure',
+        }
+        return self._config.get(alias_map.get(prop, prop))
+
+    def is_opened(self) -> bool:
+        return self._camera is not None
+
+    def get_info(self) -> Dict[str, Any]:
+        return {
+            'type': 'pi',
+            'backend': 'picamera2',
+            'camera_id': self.camera_id,
+            'status': 'started' if self._started else 'open',
+            **{k: self._config.get(k) for k in ('width', 'height', 'fps')},
+        }
+
+
+class RpicamStillCamera(CameraInterface):
+    """Fallback Raspberry Pi camera backend that shells out to rpicam-still.
 
     This implementation captures a single still image on each read by invoking:
     env -i PATH="/usr/bin:/bin:/usr/sbin:/sbin" rpicam-still --output <file> [options]
@@ -182,7 +347,8 @@ class PiCamera(CameraInterface):
     def __init__(self, camera_id: int = 0):
         self.camera_id = camera_id
         self.logger = logging.getLogger(__name__)
-        self._config = {}
+        # Minimize CMA pressure when the persistent Picamera2 backend is unavailable.
+        self._config = {'buffer_count': 1}
         self._is_open = False
         self._rpicam_path = None
         self._help_text = ""
@@ -203,10 +369,14 @@ class PiCamera(CameraInterface):
                     self._rpicam_path, "--help"
                 ], capture_output=True, text=True, timeout=5)
                 self._help_text = p.stdout + "\n" + p.stderr
-                self.available = True
-            except Exception:
-                self.logger.warning("rpicam-still found but --help probe failed; continuing with conservative defaults")
-                self.available = True
+                self.available = p.returncode == 0
+                if not self.available:
+                    self.logger.warning(
+                        f"rpicam-still probe failed with exit code {p.returncode}"
+                    )
+            except Exception as exc:
+                self.logger.warning(f"rpicam-still probe failed: {exc}")
+                self.available = False
         else:
             self.logger.warning("rpicam-still not found in PATH; Pi camera support disabled")
             self.available = False
@@ -306,7 +476,8 @@ class PiCamera(CameraInterface):
         """
         cmd = [
             'env', '-i', 'PATH=/usr/bin:/bin:/usr/sbin:/sbin',
-            self._rpicam_path, '--output', tmp_path, '--nopreview'
+            self._rpicam_path, '--camera', str(self.camera_id),
+            '--output', tmp_path, '--nopreview'
         ]
 
         # Compute effective exposure semantics first to avoid emitting --exposure multiple times
@@ -377,7 +548,8 @@ class PiCamera(CameraInterface):
 
         cmd = [
             'env', '-i', 'PATH=/usr/bin:/bin:/usr/sbin:/sbin',
-            self._rpicam_path, '--output', tmp_path, '--nopreview'
+            self._rpicam_path, '--camera', str(self.camera_id),
+            '--output', tmp_path, '--nopreview'
         ]
 
         # Append flags from current config if supported
@@ -537,18 +709,29 @@ class PiCamera(CameraInterface):
         return self._is_open and self.available
 
     def get_info(self) -> Dict[str, Any]:
-        info = {"type": "pi", "camera_id": self.camera_id, "available": self.available}
+        info = {
+            "type": "pi",
+            "backend": "rpicam-still",
+            "camera_id": self.camera_id,
+            "available": self.available,
+        }
         info.update({k: v for k, v in self._config.items() if k in ('width', 'height')})
         return info
 
 
+# Backward-compatible name for callers that explicitly used the old CLI backend.
+PiCamera = RpicamStillCamera
+
+
 class CameraManager:
-    """Unified camera manager with auto-detection"""
+    """Unified camera manager with persistent Picamera2 preference."""
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.camera = None
         self.camera_type = None
+        self.requested_camera_type = None
+        self.camera_id = 0
         
     def detect_cameras(self) -> List[Dict[str, Any]]:
         """Detect available cameras"""
@@ -641,36 +824,68 @@ class CameraManager:
         return self._create_camera(first_cam['type'], first_cam['id'])
     
     def _create_camera(self, camera_type: str, camera_id: int) -> Optional[CameraInterface]:
-        """Create camera instance of specified type"""
+        """Create a camera without silently changing an explicit backend type."""
         try:
-            if camera_type == "pi":
-                camera = PiCamera(camera_id)
+            if camera_type in ("pi", "picamera2"):
+                camera = Picamera2Camera(camera_id)
                 if camera.available:
                     return camera
-                else:
-                    self.logger.warning("Pi camera not available, falling back to USB")
-                    return USBCamera(camera_id)
-            else:
+                if camera_type == "picamera2":
+                    return None
+                camera = RpicamStillCamera(camera_id)
+                return camera if camera.available else None
+            if camera_type == "rpicam":
+                camera = RpicamStillCamera(camera_id)
+                return camera if camera.available else None
+            if camera_type == "usb":
                 return USBCamera(camera_id)
+            self.logger.error(f"Unknown camera type: {camera_type}")
+            return None
         except Exception as e:
             self.logger.error(f"Error creating {camera_type} camera: {e}")
             return None
-    
-    def open_camera(self, camera_id: int = 0, camera_type: Optional[str] = None) -> bool:
-        """Open camera with auto-detection"""
-        self.camera = self.auto_select_camera(camera_id, camera_type)
-        
-        if not self.camera:
+
+    def _open_candidate(self, camera: Optional[CameraInterface], camera_id: int) -> bool:
+        if camera is None:
             return False
-        
-        success = self.camera.open()
-        if success:
-            self.camera_type = self.camera.get_info()['type']
-            self.logger.info(f"Opened {self.camera_type} camera {camera_id}")
-        else:
-            self.camera = None
-            
-        return success
+        if not camera.open():
+            camera.close()
+            return False
+        self.camera = camera
+        info = camera.get_info()
+        self.camera_type = info['type']
+        self.logger.info(
+            f"Opened {self.camera_type} camera {camera_id} "
+            f"using {info.get('backend', self.camera_type)}"
+        )
+        return True
+
+    def open_camera(self, camera_id: int = 0, camera_type: Optional[str] = None) -> bool:
+        """Open a camera, preferring persistent Picamera2 for Pi cameras."""
+        self.close_camera()
+        self.requested_camera_type = camera_type
+        self.camera_id = camera_id
+
+        if camera_type == "pi":
+            picamera = Picamera2Camera(camera_id)
+            if picamera.available and self._open_candidate(picamera, camera_id):
+                return True
+
+            self.logger.warning("Picamera2 open failed; trying rpicam-still fallback")
+            rpicam = RpicamStillCamera(camera_id)
+            if rpicam.available and self._open_candidate(rpicam, camera_id):
+                return True
+
+            self.logger.error("No Raspberry Pi camera backend could be opened")
+            return False
+
+        if camera_type in ("picamera2", "rpicam", "usb"):
+            return self._open_candidate(
+                self._create_camera(camera_type, camera_id), camera_id
+            )
+
+        selected = self.auto_select_camera(camera_id, camera_type)
+        return self._open_candidate(selected, camera_id)
     
     def close_camera(self) -> None:
         """Close current camera"""
@@ -686,16 +901,50 @@ class CameraManager:
         return self.camera.read()
     
     def configure_camera(self, config: Dict[str, Any]) -> bool:
-        """Configure camera with settings"""
+        """Configure the camera and start a persistent Picamera2 stream."""
         if not self.camera:
             return False
-        
+
         success = True
         for prop, value in config.items():
             if not self.camera.set_property(prop, value):
                 self.logger.warning(f"Failed to set camera property {prop}={value}")
                 success = False
-        
+
+        if isinstance(self.camera, Picamera2Camera) and not self.camera._start():
+            if self.requested_camera_type == "picamera2":
+                self.camera.close()
+                self.camera = None
+                self.camera_type = None
+                return False
+
+            self.logger.warning(
+                "Picamera2 configuration failed; trying rpicam-still fallback"
+            )
+            self.camera.close()
+            fallback = RpicamStillCamera(self.camera_id)
+            if not fallback.available or not fallback.open():
+                self.camera = None
+                self.camera_type = None
+                return False
+            self.camera = fallback
+            self.camera_type = 'pi'
+            success = True
+            for prop, value in config.items():
+                if not fallback.set_property(prop, value):
+                    self.logger.warning(
+                        f"rpicam-still does not support camera property {prop}={value}"
+                    )
+
+            smoke_ok, _ = fallback.read()
+            if not smoke_ok:
+                self.logger.error("rpicam-still fallback capture smoke test failed")
+                fallback.close()
+                self.camera = None
+                self.camera_type = None
+                return False
+            self.logger.info("rpicam-still fallback capture smoke test passed")
+
         return success
     
     def get_camera_info(self) -> Dict[str, Any]:

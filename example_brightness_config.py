@@ -12,7 +12,7 @@ from config.config import LaserMonitorConfig, DetectionConfig
 config = LaserMonitorConfig()
 
 # Camera settings
-config.camera.camera_id = 1
+config.camera.camera_id = 0
 config.camera.resolution_width = 1920
 config.camera.resolution_height = 1080
 
