@@ -9,10 +9,10 @@ and is compatible with create_config_with_visual_prompts().
 """
 
 # Reference image path (latest detection screenshot)
-refer_image = r"/home/hilton/laser-monitor/output/screenshots/detection_20260224_190903.jpg"
+refer_image = r"/home/hilton/laser-monitor/output/screenshots/detection_20260612_145905.jpg"
 
 # Visual prompt bounding boxes (normalized coordinates: x1, y1, x2, y2)
-visual_prompts = [[0.6302083333333334, 0.41, 0.6428125, 0.47], [0.03416666666666665, 0.4322222222222222, 0.044166666666666674, 0.46148148148148144]]
+visual_prompts = [[0.6234375, 0.412962962962963, 0.64375, 0.45925925925925926], [0.015625, 0.4074074074074074, 0.057291666666666664, 0.5]]
 
 # Image dimensions (for reference)
 image_dimensions = {
@@ -24,5 +24,5 @@ image_dimensions = {
 metadata = {
     "created_with": "web_ui_dashboard",
     "num_prompts": 2,
-    "last_modified": "2026-03-02T19:11:00.212244"
+    "last_modified": "2026-06-12T14:59:48.832699"
 }

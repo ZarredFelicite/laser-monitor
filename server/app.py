@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, render_template, jsonify, send_file, request
 import glob
+import cv2
+import numpy as np
 from dotenv import load_dotenv, set_key, find_dotenv
 
 app = Flask(__name__)
@@ -482,6 +484,66 @@ def update_detection_boxes():
         else:
             return jsonify({'error': 'Failed to save config'}), 500
     
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/detection-boxes/<int:box_index>/tighten-red', methods=['POST'])
+def tighten_detection_box_red(box_index):
+    """Tighten one loose detection box around red pixels in the latest image."""
+    try:
+        config_data = load_web_ui_config()
+        boxes = config_data['boxes']
+        if not (0 <= box_index < len(boxes)):
+            return jsonify({'error': 'Invalid box index'}), 400
+
+        image_files = list(SCREENSHOTS_DIR.glob('detection_*.jpg'))
+        if not image_files:
+            return jsonify({'error': 'No detection images found'}), 404
+
+        latest_image = max(image_files, key=lambda f: f.stat().st_mtime)
+        image = cv2.imread(str(latest_image))
+        if image is None:
+            return jsonify({'error': 'Failed to read latest image'}), 500
+
+        height, width = image.shape[:2]
+        box = boxes[box_index]
+        x1 = max(0, min(width - 1, int(round(box[0]))))
+        y1 = max(0, min(height - 1, int(round(box[1]))))
+        x2 = max(x1 + 1, min(width, int(round(box[2]))))
+        y2 = max(y1 + 1, min(height, int(round(box[3]))))
+
+        roi = image[y1:y2, x1:x2]
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+
+        hue = hsv[:, :, 0]
+        sat = hsv[:, :, 1]
+        val = hsv[:, :, 2]
+        mask = (((hue <= 25) | (hue >= 170)) & (sat >= 80) & (val >= 80)).astype(np.uint8) * 255
+
+        kernel = np.ones((3, 3), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = [c for c in contours if cv2.contourArea(c) >= 20]
+        if not contours:
+            return jsonify({'error': 'No red/orange indicator blob found inside selected box'}), 422
+
+        largest = max(contours, key=cv2.contourArea)
+        rx, ry, rw, rh = cv2.boundingRect(largest)
+        padding = int((request.json or {}).get('padding', 6))
+        tight_box = [
+            max(0, x1 + rx - padding),
+            max(0, y1 + ry - padding),
+            min(width, x1 + rx + rw + padding),
+            min(height, y1 + ry + rh + padding),
+        ]
+
+        boxes[box_index] = tight_box
+        if save_web_ui_config(boxes, str(latest_image.absolute()), [width, height]):
+            return jsonify({'success': True, 'box': tight_box, 'boxes': boxes})
+        return jsonify({'error': 'Failed to save config'}), 500
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

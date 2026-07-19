@@ -752,6 +752,7 @@
                 <div class="controls-actions">
                     <button class="add-box-button" onclick="addDetectionBox()">➕ Add Box</button>
                     <button id="save-boxes-button" class="save-button" style="width: auto; padding: 6px 10px; font-size: 13px;" onclick="saveDetectionBoxes()" disabled>💾 Save</button>
+                    <span style="font-size: 12px; color: #666;">Make boxes loose, then use Tighten Red to snap to the red indicator.</span>
                     <label for="step-size-input" class="step-size-control">Step
                         <input id="step-size-input" type="number" min="1" max="100" step="1" value="5">
                         <span class="step-size-unit">px</span>
@@ -1155,7 +1156,10 @@
                             <div class="box-title">Detection Box ${index + 1}</div>
                             <div class="box-coords">[${Math.round(box[0])}, ${Math.round(box[1])}, ${Math.round(box[2])}, ${Math.round(box[3])}]</div>
                         </div>
-                        <button class="delete-box-button" onclick="deleteDetectionBox(${index})">🗑️ Delete</button>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="control-button" onclick="tightenBoxRed(${index})">🎯 Tighten Red</button>
+                            <button class="delete-box-button" onclick="deleteDetectionBox(${index})">🗑️ Delete</button>
+                        </div>
                     </div>
                     <div class="box-controls">
                         <div class="control-group">
@@ -1243,6 +1247,34 @@
             setBoxesDirty(true);
         }
         
+        function tightenBoxRed(index) {
+            if (index < 0 || index >= detectionBoxes.length) return;
+            if (boxesDirty && !confirm('You have unsaved box changes. Save first? Click OK to continue tightening the last saved box, or Cancel to stop.')) {
+                return;
+            }
+
+            fetch(`/api/detection-boxes/${index}/tighten-red`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ padding: 6 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    detectionBoxes = data.boxes || detectionBoxes;
+                    renderDetectionBoxes();
+                    setBoxesDirty(false);
+                    setTimeout(refreshImage, 400);
+                } else {
+                    alert('Failed to tighten box: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error tightening box:', error);
+                alert('Failed to tighten box');
+            });
+        }
+
         function deleteDetectionBox(index) {
             if (index < 0 || index >= detectionBoxes.length) return;
 
