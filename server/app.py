@@ -13,8 +13,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, render_template, jsonify, send_file, request
 import glob
-import cv2
-import numpy as np
 from dotenv import load_dotenv, set_key, find_dotenv
 
 app = Flask(__name__)
@@ -491,6 +489,9 @@ def update_detection_boxes():
 def tighten_detection_box_red(box_index):
     """Tighten one loose detection box around red pixels in the latest image."""
     try:
+        import cv2
+        import numpy as np
+
         config_data = load_web_ui_config()
         boxes = config_data['boxes']
         if not (0 <= box_index < len(boxes)):
@@ -636,4 +637,12 @@ if __name__ == '__main__':
     print(f"History file: {HISTORY_FILE}")
     print(f"Dashboard will be available at: http://localhost:5000")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug_enabled = os.getenv("LASER_MONITOR_SERVER_DEBUG", "").lower() in {
+        "1", "true", "yes"
+    }
+    app.run(
+        debug=debug_enabled,
+        use_reloader=debug_enabled,
+        host='0.0.0.0',
+        port=5000,
+    )
