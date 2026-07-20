@@ -5,6 +5,11 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-21: Daylight red-core tuning
+
+- Lowered the red chroma floor for top lamps only when strong brightness and local-contrast safeguards already establish an emitting core.
+- Added a live daylight main-stack regression fixture where both lamps are illuminated despite depressed brightness ratios.
+
 ### 2026-07-20: Nighttime small-stack tuning
 
 - Tightened and vertically extended the second machine ROI so its red, amber, and dark reference thirds align with the physical stack light.

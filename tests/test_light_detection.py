@@ -99,6 +99,20 @@ def test_strong_amber_light_survives_daylight_depressed_ratio():
     assert observation.known
 
 
+def test_daylight_main_stack_detects_dim_red_and_bright_amber():
+    frame = cv2.imread("tests/day_main_stack.png")
+    classifier = AdaptiveLightClassifier([[1.7, 2.2]])
+
+    observation = classifier.classify(
+        frame, (24, 24, 42, 84), 0, localized=True
+    )
+
+    assert observation.extras["top_ratio"] < 1.7
+    assert observation.extras["mid_ratio"] < 2.2
+    assert observation.class_name == "machine_active"
+    assert observation.known
+
+
 def test_small_night_stack_detects_both_illuminated_segments():
     frame = cv2.imread("tests/night_left_stack.png")
     classifier = AdaptiveLightClassifier([[1.4, 1.4]])

@@ -355,7 +355,7 @@ class AdaptiveLightClassifier:
             top_active = (
                 top_features["p90"] >= 160.0
                 and top_features["ring_z"] >= 3.0
-                and top_features["red_dominance"] >= 40.0
+                and top_features["red_dominance"] >= 30.0
             )
         mid_active = active(
             mid_ratio,
