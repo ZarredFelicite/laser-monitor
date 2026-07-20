@@ -172,6 +172,7 @@ class USBCamera(CameraInterface):
 class Picamera2Camera(CameraInterface):
     """Persistent Raspberry Pi camera backend using Picamera2/libcamera."""
 
+    _CAPTURE_TIMEOUT_SECONDS = 10.0
     _SUPPORTED_PROPERTIES = {
         'width', 'height', 'fps', 'auto_exposure', 'exposure',
         'brightness', 'contrast', 'saturation', 'warmup_frames'
@@ -232,6 +233,23 @@ class Picamera2Camera(CameraInterface):
 
         return controls
 
+    def _capture_array(self) -> np.ndarray:
+        """Capture one frame without allowing a failed camera to block forever."""
+        try:
+            return self._camera.capture_array(
+                'main', wait=self._CAPTURE_TIMEOUT_SECONDS
+            )
+        except TimeoutError:
+            # Picamera2 explicitly provides this cleanup for jobs that time out,
+            # including when a camera cable or frontend stops responding.
+            cancel_jobs = getattr(self._camera, 'cancel_all_and_flush', None)
+            if callable(cancel_jobs):
+                try:
+                    cancel_jobs()
+                except Exception as exc:
+                    self.logger.warning(f"Failed to cancel timed-out Picamera2 jobs: {exc}")
+            raise
+
     def _start(self) -> bool:
         if self._camera is None:
             return False
@@ -256,7 +274,7 @@ class Picamera2Camera(CameraInterface):
 
             warmup_frames = max(0, int(self._config.get('warmup_frames', 2)))
             for _ in range(warmup_frames):
-                self._camera.capture_array('main')
+                self._capture_array()
 
             self.logger.info(
                 f"Picamera2 camera {self.camera_id} started persistently at "
@@ -290,7 +308,7 @@ class Picamera2Camera(CameraInterface):
             return False, None
 
         try:
-            frame = self._camera.capture_array('main')
+            frame = self._capture_array()
             if frame is None:
                 self.logger.error(
                     "Picamera2 returned an empty frame; restarting stream on next read"

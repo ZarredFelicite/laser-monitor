@@ -5,6 +5,12 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-20: Picamera2 capture timeout recovery
+
+- Persistent Picamera2 captures now time out after 10 seconds instead of blocking the monitor indefinitely after a camera frontend failure.
+- Timed-out Picamera2 jobs are cancelled/flushed and the stream is stopped so the next cycle can restart it safely.
+- Added regression coverage for capture timeout cleanup and restart state.
+
 ### 2026-07-20: Cohesive dashboard settings drawer
 
 - Moved notification settings and all detection-box controls into the existing Settings modal, hidden by default while status, camera, statistics, and activity content remain visible.

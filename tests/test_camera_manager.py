@@ -19,6 +19,8 @@ class FakePicamera2:
         self.capture_count = 0
         self.stop_count = 0
         self.close_count = 0
+        self.cancel_count = 0
+        self.capture_waits = []
         self.__class__.instances.append(self)
 
     def create_still_configuration(self, **kwargs):
@@ -34,13 +36,17 @@ class FakePicamera2:
     def start(self):
         self.start_count += 1
 
-    def capture_array(self, stream):
+    def capture_array(self, stream, wait=None):
         assert stream == 'main'
         self.capture_count += 1
+        self.capture_waits.append(wait)
         return np.tile(
             np.array([11, 22, 33], dtype=np.uint8),
             (2, 3, 1),
         )
+
+    def cancel_all_and_flush(self):
+        self.cancel_count += 1
 
     def stop(self):
         self.stop_count += 1
@@ -79,6 +85,7 @@ def test_picamera2_reuses_one_persistent_stream(monkeypatch):
     assert fake.camera_id == 2
     assert fake.start_count == 1
     assert fake.capture_count == 4  # two warmup frames plus two requested frames
+    assert fake.capture_waits == [10.0] * 4
     assert fake.configurations == [{
         'main': {'size': (1280, 720), 'format': 'RGB888'},
         'raw': None,
@@ -102,7 +109,7 @@ def test_picamera2_capture_failure_restarts_stream_on_next_read(monkeypatch):
     fake = FakePicamera2.instances[0]
     original_capture = fake.capture_array
 
-    def fail_capture(stream):
+    def fail_capture(stream, wait=None):
         raise RuntimeError("simulated capture failure")
 
     fake.capture_array = fail_capture
@@ -113,9 +120,28 @@ def test_picamera2_capture_failure_restarts_stream_on_next_read(monkeypatch):
     assert camera.read()[0]
     assert fake.start_count == 2
 
-    fake.capture_array = lambda stream: None
+    fake.capture_array = lambda stream, wait=None: None
     assert camera.read() == (False, None)
     assert fake.stop_count == 2
+
+
+def test_picamera2_capture_timeout_cancels_job_and_restarts_stream(monkeypatch):
+    install_fake_picamera2(monkeypatch)
+    camera = Picamera2Camera(camera_id=0)
+    camera._config['warmup_frames'] = 0
+    assert camera.open()
+    fake = FakePicamera2.instances[0]
+
+    def time_out(stream, wait=None):
+        assert stream == 'main'
+        assert wait == 10.0
+        raise TimeoutError("camera frontend stopped responding")
+
+    fake.capture_array = time_out
+    assert camera.read() == (False, None)
+    assert fake.cancel_count == 1
+    assert fake.stop_count == 1
+    assert not camera._started
 
 
 def test_rpicam_fallback_uses_camera_id_and_one_buffer():
