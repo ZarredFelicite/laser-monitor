@@ -338,7 +338,7 @@ class AdaptiveLightClassifier:
             if (
                 allow_strong_emission
                 and features["p90"] >= 190.0
-                and features["ring_z"] >= 8.5
+                and features["ring_z"] >= 5.0
                 and chroma >= 40.0
             ):
                 return True
@@ -354,8 +354,8 @@ class AdaptiveLightClassifier:
             # this excludes the dim red-lens highlights seen in daylight.
             top_active = (
                 top_features["p90"] >= 180.0
-                and top_features["ring_z"] >= 6.0
-                and top_features["red_dominance"] >= 60.0
+                and top_features["ring_z"] >= 5.0
+                and top_features["red_dominance"] >= 40.0
             )
         mid_active = active(
             mid_ratio,
