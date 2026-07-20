@@ -205,36 +205,47 @@
             margin-left: 10px;
         }
         
-        /* Modal Styles */
+        /* Cohesive settings drawer */
         .modal {
-            display: none;
+            display: flex;
             position: fixed;
             z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
+            inset: 0;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2vh 2vw;
+            overflow-y: auto;
+            background-color: rgba(15, 23, 42, 0.58);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal[hidden] {
+            display: none;
         }
         
         .modal-content {
             background-color: #fefefe;
-            margin: 5% auto;
-            padding: 30px;
-            border: 1px solid #888;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 0;
+            padding: clamp(18px, 3vw, 30px);
+            border: 1px solid #d9e0e7;
+            border-radius: 12px;
+            width: min(960px, 100%);
+            box-sizing: border-box;
+            max-height: 96vh;
+            overflow-y: auto;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            margin: -5px 0 20px;
+            padding: 0 0 14px;
+            background-color: #fefefe;
             border-bottom: 2px solid #007bff;
         }
         
@@ -244,7 +255,15 @@
         }
         
         .close {
-            color: #aaa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            color: #667085;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
@@ -252,8 +271,31 @@
         }
         
         .close:hover,
-        .close:focus {
+        .close:focus-visible {
             color: #000;
+            background-color: #f1f3f5;
+            border-color: #ced4da;
+        }
+
+        .settings-section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .settings-section h3 {
+            margin: 0 0 6px;
+            color: #333;
+        }
+
+        .settings-section > p {
+            margin: 0 0 16px;
+            color: #667085;
+            font-size: 0.9em;
+        }
+
+        body.modal-open {
+            overflow: hidden;
         }
         
         .form-group {
@@ -416,6 +458,17 @@
             
             .header h1 {
                 font-size: 1.5em;
+            }
+
+            .modal {
+                padding: 0;
+            }
+
+            .modal-content {
+                width: 100%;
+                max-height: 100vh;
+                min-height: 100vh;
+                border-radius: 0;
             }
             
             .status-indicator {
@@ -649,46 +702,72 @@
         <span id="pause-indicator" class="pause-indicator" style="display: none;">⏸ Notifications Paused</span>
         <div id="last-update" class="last-update"></div>
         <button class="refresh-button" onclick="refreshDashboard()">🔄 Refresh</button>
-        <button class="settings-button" onclick="openSettings()">⚙️ Settings</button>
+        <button id="settings-button" class="settings-button" type="button" onclick="openSettings()" aria-controls="settingsModal" aria-expanded="false">⚙️ Settings</button>
     </div>
     
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
+    <!-- Settings drawer: notification and detection controls stay hidden until requested. -->
+    <div id="settingsModal" class="modal" role="presentation" hidden>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
             <div class="modal-header">
-                <h2>⚙️ Notification Settings</h2>
-                <span class="close" onclick="closeSettings()">&times;</span>
+                <h2 id="settings-title">⚙️ Dashboard Settings</h2>
+                <button class="close" type="button" onclick="closeSettings()" aria-label="Close settings">&times;</button>
             </div>
             
-            <div id="success-message" class="success-message">Settings saved successfully!</div>
-            
-            <form id="settings-form" onsubmit="saveSettings(event)">
-                <div class="form-group">
-                    <label for="email-recipients">Email Recipients</label>
-                    <input type="text" id="email-recipients" name="email_recipients" placeholder="user1@example.com, user2@example.com">
-                    <small>Comma-separated email addresses</small>
-                </div>
+            <div class="settings-section" style="margin-top: 0; padding-top: 0; border-top: 0;">
+                <h3>Notifications</h3>
+                <p>Choose where alerts are sent and pause notifications when needed.</p>
+                <div id="success-message" class="success-message" role="status" aria-live="polite">Settings saved successfully!</div>
                 
-                <div class="form-group">
-                    <label for="sms-recipients">SMS Recipients</label>
-                    <input type="text" id="sms-recipients" name="sms_recipients" placeholder="+15551234567, +15559876543">
-                    <small>Comma-separated phone numbers in E.164 format (e.g., +1234567890)</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Notifications Status</label>
-                    <div class="toggle-container">
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="notifications-enabled">
-                            <span class="slider"></span>
-                        </label>
-                        <span id="notifications-status">Enabled</span>
+                <form id="settings-form" onsubmit="saveSettings(event)">
+                    <div class="form-group">
+                        <label for="email-recipients">Email Recipients</label>
+                        <input type="text" id="email-recipients" name="email_recipients" placeholder="user1@example.com, user2@example.com">
+                        <small>Comma-separated email addresses</small>
                     </div>
-                    <small>Toggle to pause/resume all notifications</small>
+
+                    <div class="form-group">
+                        <label for="sms-recipients">SMS Recipients</label>
+                        <input type="text" id="sms-recipients" name="sms_recipients" placeholder="+15551234567, +15559876543">
+                        <small>Comma-separated phone numbers in E.164 format (e.g., +1234567890)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notifications Status</label>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="notifications-enabled">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="notifications-status">Enabled</span>
+                        </div>
+                        <small>Toggle to pause/resume all notifications</small>
+                    </div>
+
+                    <button type="submit" class="save-button">💾 Save Settings</button>
+                </form>
+            </div>
+
+            <!-- Detection Box Controls -->
+            <section class="settings-section" aria-labelledby="detection-settings-title">
+                <h3 id="detection-settings-title">🎯 Detection Box Controls</h3>
+                <p>Adjust the regions used to detect the laser indicator. Changes are applied when saved.</p>
+                <div class="controls-header">
+                    <div class="controls-actions">
+                        <button class="add-box-button" type="button" onclick="addDetectionBox()">➕ Add Box</button>
+                        <button id="save-boxes-button" class="save-button" type="button" style="width: auto; padding: 6px 10px; font-size: 13px;" onclick="saveDetectionBoxes()" disabled>💾 Save</button>
+                        <span style="font-size: 12px; color: #666;">Make boxes loose, then use Tighten Red to snap to the red indicator.</span>
+                        <label for="step-size-input" class="step-size-control">Step
+                            <input id="step-size-input" type="number" min="1" max="100" step="1" value="5">
+                            <span class="step-size-unit">px</span>
+                        </label>
+                    </div>
+                    <div id="boxes-dirty-status" class="controls-info" role="status" aria-live="polite">No unsaved changes</div>
                 </div>
-                
-                <button type="submit" class="save-button">💾 Save Settings</button>
-            </form>
+                <div id="detection-boxes-container">
+                    <!-- Detection boxes will be populated here -->
+                </div>
+                <div id="boxes-error" class="error" style="display: none;" role="alert"></div>
+            </section>
         </div>
     </div>
     
@@ -702,7 +781,7 @@
             </div>
             <div class="image-legend">
                 <span class="legend-box"></span>
-                <span>Detection boxes shown in green - adjust using controls below</span>
+                <span>Detection boxes shown in green - adjust them from Settings</span>
             </div>
             <div id="image-error" class="error" style="display: none;">
                 No detection image available
@@ -743,27 +822,6 @@
                     <!-- Machine uptime items will be populated here -->
                 </div>
             </div>
-        </div>
-        
-        <!-- Detection Box Controls -->
-        <div class="card" style="grid-column: 1 / -1;">
-            <h2>🎯 Detection Box Controls</h2>
-            <div class="controls-header">
-                <div class="controls-actions">
-                    <button class="add-box-button" onclick="addDetectionBox()">➕ Add Box</button>
-                    <button id="save-boxes-button" class="save-button" style="width: auto; padding: 6px 10px; font-size: 13px;" onclick="saveDetectionBoxes()" disabled>💾 Save</button>
-                    <span style="font-size: 12px; color: #666;">Make boxes loose, then use Tighten Red to snap to the red indicator.</span>
-                    <label for="step-size-input" class="step-size-control">Step
-                        <input id="step-size-input" type="number" min="1" max="100" step="1" value="5">
-                        <span class="step-size-unit">px</span>
-                    </label>
-                </div>
-                <div id="boxes-dirty-status" class="controls-info">No unsaved changes</div>
-            </div>
-            <div id="detection-boxes-container">
-                <!-- Detection boxes will be populated here -->
-            </div>
-            <div id="boxes-error" class="error" style="display: none;"></div>
         </div>
         
         <!-- Activity Charts -->
@@ -1320,15 +1378,44 @@
             });
         }
         
-        // Notification Settings Functions
+        // Notification and dashboard settings functions
+        let lastFocusedElement = null;
+
+        function getSettingsFocusableElements() {
+            return Array.from(document.querySelectorAll(
+                '#settingsModal button:not([disabled]), #settingsModal input, #settingsModal [href], #settingsModal select, #settingsModal textarea'
+            )).filter(element => element.offsetParent !== null);
+        }
+
         function openSettings() {
-            document.getElementById('settingsModal').style.display = 'block';
+            const modal = document.getElementById('settingsModal');
+            const settingsButton = document.getElementById('settings-button');
+            lastFocusedElement = document.activeElement;
+            modal.hidden = false;
+            document.body.classList.add('modal-open');
+            settingsButton.setAttribute('aria-expanded', 'true');
             loadSettings();
+            requestAnimationFrame(() => {
+                const closeButton = modal.querySelector('.close');
+                if (closeButton) {
+                    closeButton.focus();
+                }
+            });
         }
         
         function closeSettings() {
-            document.getElementById('settingsModal').style.display = 'none';
+            const modal = document.getElementById('settingsModal');
+            if (modal.hidden) {
+                return;
+            }
+            modal.hidden = true;
+            document.body.classList.remove('modal-open');
+            document.getElementById('settings-button').setAttribute('aria-expanded', 'false');
             document.getElementById('success-message').style.display = 'none';
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus();
+            }
+            lastFocusedElement = null;
         }
         
         function loadSettings() {
@@ -1422,13 +1509,45 @@
                 stepSizeInput.addEventListener('blur', getStepSize);
             }
             
-            // Close modal when clicking outside
-            window.onclick = function(event) {
-                const modal = document.getElementById('settingsModal');
-                if (event.target === modal) {
+            const settingsModal = document.getElementById('settingsModal');
+            settingsModal.addEventListener('click', function(event) {
+                if (event.target === settingsModal) {
                     closeSettings();
                 }
-            };
+            });
+
+            // Keep keyboard users inside the settings dialog and support Escape to close.
+            document.addEventListener('keydown', function(event) {
+                if (settingsModal.hidden) {
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeSettings();
+                    return;
+                }
+
+                if (event.key !== 'Tab') {
+                    return;
+                }
+
+                const focusableElements = getSettingsFocusableElements();
+                if (focusableElements.length === 0) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                if (event.shiftKey && document.activeElement === firstElement) {
+                    event.preventDefault();
+                    lastElement.focus();
+                } else if (!event.shiftKey && document.activeElement === lastElement) {
+                    event.preventDefault();
+                    firstElement.focus();
+                }
+            });
         });
     </script>
 </body>

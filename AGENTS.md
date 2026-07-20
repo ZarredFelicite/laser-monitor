@@ -5,6 +5,11 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-20: Cohesive dashboard settings drawer
+
+- Moved notification settings and all detection-box controls into the existing Settings modal, hidden by default while status, camera, statistics, and activity content remain visible.
+- Added responsive full-screen mobile treatment, backdrop/Escape close behavior, focus restoration/trapping, and dialog/button ARIA semantics without changing settings or detection-box APIs.
+
 ### 2026-07-20: Drift-Tolerant Indicator Detection
 
 - Added bounded global/local ROI registration against a raw reference frame.
