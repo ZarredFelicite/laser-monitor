@@ -353,8 +353,8 @@ class AdaptiveLightClassifier:
             # A lit red lamp has both a bright core and strong red dominance;
             # this excludes the dim red-lens highlights seen in daylight.
             top_active = (
-                top_features["p90"] >= 180.0
-                and top_features["ring_z"] >= 5.0
+                top_features["p90"] >= 160.0
+                and top_features["ring_z"] >= 3.0
                 and top_features["red_dominance"] >= 40.0
             )
         mid_active = active(
