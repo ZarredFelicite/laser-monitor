@@ -339,7 +339,7 @@ class AdaptiveLightClassifier:
                 allow_strong_emission
                 and features["p90"] >= 190.0
                 and features["ring_z"] >= 5.0
-                and chroma >= 40.0
+                and chroma >= 25.0
             ):
                 return True
             if ratio < threshold:

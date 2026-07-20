@@ -5,6 +5,12 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-20: Nighttime small-stack tuning
+
+- Tightened and vertically extended the second machine ROI so its red, amber, and dark reference thirds align with the physical stack light.
+- Relaxed the strong amber chroma floor only when bright-core and local-contrast safeguards are also satisfied.
+- Added a cropped live nighttime regression fixture covering both illuminated segments on the distant stack.
+
 ### 2026-07-20: Picamera2 capture timeout recovery
 
 - Persistent Picamera2 captures now time out after 10 seconds instead of blocking the monitor indefinitely after a camera frontend failure.

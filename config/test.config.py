@@ -13,7 +13,7 @@ refer_image = r"output/latest_raw.jpg"
 
 # Visual prompt bounding boxes (normalized coordinates: x1, y1, x2, y2)
 # Recommissioned against the unannotated persistent-camera frame on 2026-07-20.
-visual_prompts = [[0.6270833333333333, 0.4148148148148148, 0.6364583333333333, 0.47129629629629627], [0.025, 0.4444444444444444, 0.0375, 0.4777777777777778]]
+visual_prompts = [[0.6270833333333333, 0.4148148148148148, 0.6364583333333333, 0.47129629629629627], [0.028645833333333332, 0.44814814814814813, 0.036458333333333336, 0.4898148148148148]]
 
 # Image dimensions (for reference)
 image_dimensions = {

@@ -99,6 +99,20 @@ def test_strong_amber_light_survives_daylight_depressed_ratio():
     assert observation.known
 
 
+def test_small_night_stack_detects_both_illuminated_segments():
+    frame = cv2.imread("tests/night_left_stack.png")
+    classifier = AdaptiveLightClassifier([[1.4, 1.4]])
+
+    observation = classifier.classify(
+        frame, (25, 24, 40, 69), 0, localized=True
+    )
+
+    assert observation.extras["top_ratio"] < 1.4
+    assert observation.extras["mid_ratio"] < 1.4
+    assert observation.class_name == "machine_active"
+    assert observation.known
+
+
 def test_tracker_rejects_implausible_total_drift(visual_config):
     reference = cv2.imread("tests/test1.jpg")
     shifted = _translate_and_relight(reference, dx=100, dy=0)
