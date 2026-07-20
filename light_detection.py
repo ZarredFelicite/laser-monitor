@@ -408,7 +408,7 @@ class AdaptiveLightClassifier:
 
 
 class TemporalStateTracker:
-    """Require repeated cycle-level observations before changing trusted state."""
+    """Confirm inactive transitions while accepting burst-verified activity promptly."""
 
     def __init__(self, confirmations: int = 2, unknown_hold_cycles: int = 3):
         self.confirmations = max(1, int(confirmations))
@@ -442,6 +442,15 @@ class TemporalStateTracker:
         if class_name == stable:
             self._candidates[machine_id].clear()
             return stable, True, "stable"
+
+        # Each cycle-level class has already won a three-frame burst. Promote
+        # activity immediately so a running machine is never displayed as
+        # inactive for another full monitoring interval. Inactive transitions
+        # remain debounced to protect alerts from a transient missed lamp.
+        if class_name == "machine_active":
+            self._stable[machine_id] = class_name
+            self._candidates[machine_id].clear()
+            return class_name, True, "transition_confirmed"
 
         candidates = self._candidates.setdefault(
             machine_id, deque(maxlen=self.confirmations)

@@ -223,7 +223,13 @@ def test_temporal_tracker_confirms_transitions_and_holds_unknown():
 
     assert tracker.update("machine_0", "machine_off", True)[0] == "machine_off"
     assert tracker.update("machine_0", "machine_active", True) == (
-        "machine_off", True, "transition_pending"
+        "machine_active", True, "transition_confirmed"
+    )
+    assert tracker.update("machine_0", "machine_off", True) == (
+        "machine_active", True, "transition_pending"
+    )
+    assert tracker.update("machine_0", "machine_off", True) == (
+        "machine_off", True, "transition_confirmed"
     )
     assert tracker.update("machine_0", "machine_active", True) == (
         "machine_active", True, "transition_confirmed"
