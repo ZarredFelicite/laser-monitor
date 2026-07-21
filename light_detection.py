@@ -283,11 +283,14 @@ class AdaptiveLightClassifier:
         blue = segment[:, :, 0].astype(np.float32)
         green = segment[:, :, 1].astype(np.float32)
         red = segment[:, :, 2].astype(np.float32)
+        red_dominance = red - np.maximum(green, blue)
         return {
             "mean": float(np.mean(gray)),
             "p90": float(np.percentile(gray, 90)),
             "ring_z": float((np.percentile(gray, 90) - ring_median) / (ring_mad + 5.0)),
-            "red_dominance": float(np.median(red - np.maximum(green, blue))),
+            "red_dominance": float(np.median(red_dominance)),
+            "red_p90": float(np.percentile(red, 90)),
+            "red_core_fraction": float(np.mean((red >= 180.0) & (red_dominance >= 30.0))),
             "warm_dominance": float(np.median(np.minimum(red, green) - blue)),
         }
 
@@ -353,8 +356,8 @@ class AdaptiveLightClassifier:
             # A lit red lamp has both a bright core and strong red dominance;
             # this excludes the dim red-lens highlights seen in daylight.
             top_active = (
-                top_features["p90"] >= 160.0
-                and top_features["ring_z"] >= 3.0
+                top_features["red_p90"] >= 200.0
+                and top_features["red_core_fraction"] >= 0.15
                 and top_features["red_dominance"] >= 30.0
             )
         mid_active = active(

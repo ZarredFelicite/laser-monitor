@@ -7,8 +7,8 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ### 2026-07-21: Daylight red-core tuning
 
-- Lowered the red chroma floor for top lamps only when strong brightness and local-contrast safeguards already establish an emitting core.
-- Added a live daylight main-stack regression fixture where both lamps are illuminated despite depressed brightness ratios.
+- Detects top-lamp emission from red-channel core intensity and occupied core area, avoiding unstable grayscale thresholds for saturated red lamps while rejecting saved daylight lens reflections.
+- Added live daylight main-stack regression fixtures at two exposures where both lamps are illuminated despite depressed brightness ratios.
 - Burst-confirmed active transitions now publish immediately; inactive transitions retain two-cycle debounce to prevent transient missed lamps from triggering inactivity.
 
 ### 2026-07-20: Nighttime small-stack tuning
