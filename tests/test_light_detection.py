@@ -118,6 +118,7 @@ def test_working_light_only_is_active():
     [
         ("day_main_stack.png", (24, 24, 42, 84)),
         ("day_main_stack_low_exposure.png", (24, 28, 42, 88)),
+        ("day_main_stack_low_contrast.png", (24, 28, 42, 88)),
     ],
 )
 def test_daylight_main_stack_detects_dim_red_and_bright_amber(image_name, box):
@@ -126,9 +127,9 @@ def test_daylight_main_stack_detects_dim_red_and_bright_amber(image_name, box):
 
     observation = classifier.classify(frame, box, 0, localized=True)
 
-    assert observation.extras["top_ratio"] < 1.7
     assert observation.extras["mid_ratio"] < 2.2
     assert observation.extras["top_features"]["red_core_fraction"] >= 0.15
+    assert observation.extras["mid_features"]["warm_core_fraction"] >= 0.12
     assert observation.class_name == "machine_active"
     assert observation.known
 
@@ -248,8 +249,8 @@ def test_temporal_tracker_confirms_transitions_and_holds_unknown():
     assert tracker.update("machine_0", "machine_off", True) == (
         "machine_active", True, "transition_pending"
     )
-    assert tracker.update("machine_0", "machine_off", True) == (
-        "machine_off", True, "transition_confirmed"
+    assert tracker.update("machine_0", "machine_on_only", True) == (
+        "machine_on_only", True, "transition_confirmed"
     )
     assert tracker.update("machine_0", "machine_active", True) == (
         "machine_active", True, "transition_confirmed"

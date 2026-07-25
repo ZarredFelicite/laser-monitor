@@ -8,7 +8,9 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 ### 2026-07-21: Daylight red-core tuning
 
 - Detects top-lamp emission from red-channel core intensity and occupied core area, avoiding unstable grayscale thresholds for saturated red lamps while rejecting saved daylight lens reflections.
-- Added live daylight main-stack regression fixtures at two exposures where both lamps are illuminated despite depressed brightness ratios.
+- Detects amber emission from warm-channel core intensity and occupied core area when daylight depresses brightness/local-contrast evidence.
+- Added live daylight main-stack regression fixtures across exposure and local-contrast changes.
+- Temporal debounce compares active/inactive semantics rather than exact inactive subclasses, preventing stale active states when marginal lamps alternate between `machine_on_only` and `machine_off`.
 - Burst-confirmed active transitions now publish immediately; inactive transitions retain two-cycle debounce to prevent transient missed lamps from triggering inactivity.
 - `machine_working_only` resolves to active because the working indicator proves operation even when the power indicator is missed; this mapping is shared by adaptive, legacy brightness/color, burst, and temporal paths.
 

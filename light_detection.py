@@ -292,6 +292,8 @@ class AdaptiveLightClassifier:
         green = segment[:, :, 1].astype(np.float32)
         red = segment[:, :, 2].astype(np.float32)
         red_dominance = red - np.maximum(green, blue)
+        warm_intensity = np.minimum(red, green)
+        warm_dominance = warm_intensity - blue
         return {
             "mean": float(np.mean(gray)),
             "p90": float(np.percentile(gray, 90)),
@@ -299,7 +301,11 @@ class AdaptiveLightClassifier:
             "red_dominance": float(np.median(red_dominance)),
             "red_p90": float(np.percentile(red, 90)),
             "red_core_fraction": float(np.mean((red >= 180.0) & (red_dominance >= 30.0))),
-            "warm_dominance": float(np.median(np.minimum(red, green) - blue)),
+            "warm_dominance": float(np.median(warm_dominance)),
+            "warm_p90": float(np.percentile(warm_intensity, 90)),
+            "warm_core_fraction": float(
+                np.mean((warm_intensity >= 170.0) & (warm_dominance >= 20.0))
+            ),
         }
 
     def classify(
@@ -348,9 +354,8 @@ class AdaptiveLightClassifier:
             # produce similarly strong red highlights in direct daylight.
             if (
                 allow_strong_emission
-                and features["p90"] >= 190.0
-                and features["ring_z"] >= 5.0
-                and chroma >= 25.0
+                and features["warm_p90"] >= 190.0
+                and features["warm_core_fraction"] >= 0.12
             ):
                 return True
             if ratio < threshold:
@@ -467,7 +472,11 @@ class TemporalStateTracker:
             machine_id, deque(maxlen=self.confirmations)
         )
         candidates.append(class_name)
-        if len(candidates) == self.confirmations and len(set(candidates)) == 1:
+        candidate_statuses = {class_is_active(candidate) for candidate in candidates}
+        if len(candidates) == self.confirmations and len(candidate_statuses) == 1:
+            # Debounce operational status rather than exact inactive subclasses.
+            # A marginal power lamp may alternate on-only and off, but both
+            # still prove that the working indicator is absent.
             self._stable[machine_id] = class_name
             candidates.clear()
             return class_name, True, "transition_confirmed"
