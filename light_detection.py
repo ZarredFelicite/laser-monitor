@@ -21,6 +21,14 @@ class LocalizationResult:
     source: str
 
 
+ACTIVE_MACHINE_CLASSES = frozenset({"machine_active", "machine_working_only"})
+
+
+def class_is_active(class_name: str) -> bool:
+    """Return whether the class proves that the machine is working."""
+    return class_name in ACTIVE_MACHINE_CLASSES
+
+
 @dataclass
 class LightObservation:
     class_name: str
@@ -370,7 +378,7 @@ class AdaptiveLightClassifier:
         if top_active and mid_active:
             class_name, laser_status = "machine_active", "active"
         elif top_active:
-            class_name, laser_status = "machine_working_only", "inactive"
+            class_name, laser_status = "machine_working_only", "active"
         elif mid_active:
             class_name, laser_status = "machine_on_only", "inactive"
         else:
@@ -450,7 +458,7 @@ class TemporalStateTracker:
         # activity immediately so a running machine is never displayed as
         # inactive for another full monitoring interval. Inactive transitions
         # remain debounced to protect alerts from a transient missed lamp.
-        if class_name == "machine_active":
+        if class_is_active(class_name):
             self._stable[machine_id] = class_name
             self._candidates[machine_id].clear()
             return class_name, True, "transition_confirmed"

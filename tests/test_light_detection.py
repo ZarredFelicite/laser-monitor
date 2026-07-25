@@ -99,6 +99,20 @@ def test_strong_amber_light_survives_daylight_depressed_ratio():
     assert observation.known
 
 
+def test_working_light_only_is_active():
+    frame = np.full((60, 60, 3), 50, dtype=np.uint8)
+    frame[15:25, 15:45] = (0, 0, 255)
+    classifier = AdaptiveLightClassifier([[1.7, 2.2]])
+
+    observation = classifier.classify(
+        frame, (15, 15, 45, 45), 0, localized=True
+    )
+
+    assert observation.class_name == "machine_working_only"
+    assert observation.laser_status == "active"
+    assert observation.known
+
+
 @pytest.mark.parametrize(
     ("image_name", "box"),
     [

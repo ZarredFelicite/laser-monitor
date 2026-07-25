@@ -10,6 +10,7 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 - Detects top-lamp emission from red-channel core intensity and occupied core area, avoiding unstable grayscale thresholds for saturated red lamps while rejecting saved daylight lens reflections.
 - Added live daylight main-stack regression fixtures at two exposures where both lamps are illuminated despite depressed brightness ratios.
 - Burst-confirmed active transitions now publish immediately; inactive transitions retain two-cycle debounce to prevent transient missed lamps from triggering inactivity.
+- `machine_working_only` resolves to active because the working indicator proves operation even when the power indicator is missed; this mapping is shared by adaptive, legacy brightness/color, burst, and temporal paths.
 
 ### 2026-07-20: Nighttime small-stack tuning
 

@@ -36,6 +36,7 @@ try:
         AdaptiveLightClassifier,
         DriftLocalizer,
         TemporalStateTracker,
+        class_is_active,
     )
     import cv2
     import numpy as np
@@ -1253,7 +1254,7 @@ class LaserMonitor:
                     top_excess = max(0, top_brightness - top_threshold)
                     base_confidence = 0.5 + min(0.5, top_excess / (2 * top_threshold))
                     confidence = min(1.0, base_confidence * brightness_factor)
-                    laser_status = "inactive"  # Not fully active without middle (machine on)
+                    laser_status = "active"  # Working light proves active operation
                 elif mid_active:
                     class_name = "machine_on_only"  # Middle only: machine is on but not working
                     mid_excess = max(0, mid_brightness - mid_threshold)
@@ -1375,7 +1376,7 @@ class LaserMonitor:
                     red_excess = max(0, red_ratio - self.config.detection.red_activation_ratio)
                     base_confidence = 0.5 + min(0.5, red_excess / (2 * self.config.detection.red_activation_ratio))
                     confidence = min(1.0, base_confidence * brightness_factor)
-                    laser_status = "inactive"  # Not fully active without orange (machine on)
+                    laser_status = "active"  # Working light proves active operation
                 elif orange_active:
                     class_name = "machine_on_only"  # Orange only: machine is on but not working
                     orange_excess = max(0, orange_ratio - orange_activation_threshold)
@@ -1898,7 +1899,7 @@ class LaserMonitor:
                 class_name = max(counts, key=lambda name: (counts[name], name))
                 matching = [s for s in known_samples if s.class_name == class_name]
                 representative = matching[-1]
-                laser_status = "active" if class_name == "machine_active" else "inactive"
+                laser_status = "active" if class_is_active(class_name) else "inactive"
                 agreement = len(matching) / len(bursts)
                 confidence = float(np.median([s.confidence for s in matching])) * agreement
                 known = len(matching) >= required
@@ -1953,7 +1954,7 @@ class LaserMonitor:
                 detection.confidence = 0.0
             else:
                 detection.laser_status = (
-                    "active" if stable_class == "machine_active" else "inactive"
+                    "active" if class_is_active(stable_class) else "inactive"
                 )
                 if not raw_known:
                     detection.confidence = 0.0
