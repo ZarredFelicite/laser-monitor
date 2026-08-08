@@ -9,6 +9,7 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 - Reduced hourly activity output to 24 buckets with one parsed/aggregated history pass.
 - Added thread-safe history-state stats caching with malformed/missing-file handling.
+- Changed history stats invalidation to stale-while-revalidate: serve the last snapshot immediately, run one guarded background rebuild, and publish only matching file states.
 - Updated dashboard charts in place, removed the duplicate initial image request, and disabled Flask debug/reloader startup.
 
 ### 2026-07-21: Daylight red-core tuning

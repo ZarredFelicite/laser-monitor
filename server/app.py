@@ -32,6 +32,8 @@ ENV_FILE = Path(__file__).parent.parent / ".env"
 _stats_cache_lock = threading.RLock()
 _stats_cache_state = None
 _stats_cache = None
+_stats_refreshing = False
+_stats_refresh_thread = None
 
 
 def _empty_stats(error=None):
@@ -55,7 +57,7 @@ def _history_file_state():
         stat = HISTORY_FILE.stat()
     except OSError:
         return (str(HISTORY_FILE), None)
-    return (str(HISTORY_FILE), stat.st_mtime_ns, stat.st_size)
+    return (str(HISTORY_FILE), stat.st_ino, stat.st_mtime_ns, stat.st_size)
 
 
 def _parse_history_entries(entries):
@@ -210,35 +212,87 @@ def _build_stats(history_data, now=None):
     return stats
 
 
+def _load_stats_for_state(state):
+    """Build one stats snapshot, allowing callers to verify its file state."""
+    if state[1] is None:
+        return _empty_stats('No machine history found')
+
+    try:
+        with HISTORY_FILE.open('r') as history_file:
+            history_data = json.load(history_file)
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        return _empty_stats(f'Unable to load machine history: {exc}')
+    return _build_stats(history_data)
+
+
+def _start_stats_refresh_locked(state):
+    """Start one non-blocking refresh; the caller must hold the cache lock."""
+    global _stats_refreshing, _stats_refresh_thread
+
+    if _stats_refreshing:
+        return
+    _stats_refreshing = True
+    _stats_refresh_thread = threading.Thread(
+        target=_refresh_stats,
+        args=(state,),
+        name='stats-refresh',
+        daemon=True,
+    )
+    _stats_refresh_thread.start()
+
+
+def _refresh_stats(state):
+    """Build and publish a snapshot only if the file still has its target state."""
+    global _stats_cache_state, _stats_cache
+    global _stats_refreshing
+
+    try:
+        stats = _load_stats_for_state(state)
+    except Exception as exc:  # Keep a failed worker from wedging future refreshes.
+        stats = _empty_stats(f'Unable to load machine history: {exc}')
+
+    with _stats_cache_lock:
+        current_state = _history_file_state()
+        if current_state == state:
+            _stats_cache_state = state
+            _stats_cache = stats
+
+        _stats_refreshing = False
+        if current_state != state:
+            # The file changed while parsing. Refresh the newest state, still
+            # keeping the old snapshot available to requests in the meantime.
+            _start_stats_refresh_locked(current_state)
+
+
 def _get_cached_stats():
-    """Load and cache stats while invalidating on any history file change."""
+    """Return cached stats immediately and refresh changed history in the background."""
     global _stats_cache_state, _stats_cache
 
     with _stats_cache_lock:
+        state = _history_file_state()
+        if state == _stats_cache_state and _stats_cache is not None:
+            return _stats_cache
+
+        if _stats_cache is not None:
+            if _stats_cache_state is not None and _stats_cache_state[0] == state[0]:
+                _start_stats_refresh_locked(state)
+                return _stats_cache
+            # A changed history path cannot use a snapshot from the old path.
+            _stats_cache_state = None
+            _stats_cache = None
+
+        # There is no response-safe snapshot at startup, so build synchronously.
+        # Retry once if an atomic history replacement races the initial read.
         for attempt in range(2):
             state = _history_file_state()
-            if state == _stats_cache_state and _stats_cache is not None:
-                return _stats_cache
-
-            if state[1] is None:
-                stats = _empty_stats('No machine history found')
-            else:
-                try:
-                    with HISTORY_FILE.open('r') as history_file:
-                        history_data = json.load(history_file)
-                except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
-                    stats = _empty_stats(f'Unable to load machine history: {exc}')
-                else:
-                    stats = _build_stats(history_data)
-
-            # History writes are atomic, but retry if a replacement happened
-            # while this request was reading the file.
+            stats = _load_stats_for_state(state)
             current_state = _history_file_state()
-            if current_state != state and attempt == 0:
-                continue
             if current_state == state:
                 _stats_cache_state = state
                 _stats_cache = stats
+                return stats
+            if attempt == 0:
+                continue
             return stats
 
         return stats

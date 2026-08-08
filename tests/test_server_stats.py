@@ -1,4 +1,5 @@
 import json
+import threading
 from datetime import datetime, timedelta
 
 import server.app as server_app
@@ -122,10 +123,139 @@ def test_stats_cache_reuses_snapshot_and_invalidates_on_history_change(tmp_path,
     history_path.write_text(json.dumps({
         "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "inactive")]}
     }))
+    stale = client.get("/api/stats").get_json()
+    assert stale["active_machines"] == 1
+    assert stale["inactive_machines"] == 0
+
+    refresh_thread = server_app._stats_refresh_thread
+    refresh_thread.join(timeout=2)
+    assert not refresh_thread.is_alive()
+
     changed = client.get("/api/stats").get_json()
     assert changed["inactive_machines"] == 1
     assert changed["active_machines"] == 0
     assert len(calls) == 2
+
+
+def test_stats_stale_response_uses_one_background_refresh(tmp_path, monkeypatch):
+    history_path = tmp_path / "machine_history.json"
+    now = datetime.now()
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "active")]}
+    }))
+    monkeypatch.setattr(server_app, "HISTORY_FILE", history_path)
+
+    original_build_stats = server_app._build_stats
+    calls = []
+    refresh_started = threading.Event()
+    release_refresh = threading.Event()
+
+    def blocking_build_stats(history_data, now=None):
+        calls.append(history_data)
+        if len(calls) == 2:
+            refresh_started.set()
+            release_refresh.wait(timeout=2)
+        return original_build_stats(history_data, now=now)
+
+    monkeypatch.setattr(server_app, "_build_stats", blocking_build_stats)
+    client = server_app.app.test_client()
+    assert client.get("/api/stats").get_json()["active_machines"] == 1
+
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "inactive")]}
+    }))
+    stale = client.get("/api/stats").get_json()
+    assert stale["active_machines"] == 1
+    assert refresh_started.wait(timeout=2)
+
+    barrier = threading.Barrier(5)
+    results = []
+
+    def read_cached_stats():
+        barrier.wait()
+        results.append(server_app._get_cached_stats())
+
+    readers = [threading.Thread(target=read_cached_stats) for _ in range(4)]
+    for reader in readers:
+        reader.start()
+    barrier.wait()
+    for reader in readers:
+        reader.join(timeout=2)
+        assert not reader.is_alive()
+
+    assert len(results) == 4
+    assert all(result["active_machines"] == 1 for result in results)
+    assert len(calls) == 2
+
+    release_refresh.set()
+    refresh_thread = server_app._stats_refresh_thread
+    refresh_thread.join(timeout=2)
+    assert not refresh_thread.is_alive()
+    refreshed = client.get("/api/stats").get_json()
+    assert refreshed["inactive_machines"] == 1
+    assert refreshed["active_machines"] == 0
+
+
+def test_stats_refresh_does_not_publish_replaced_history_snapshot(
+    tmp_path, monkeypatch
+):
+    history_path = tmp_path / "machine_history.json"
+    now = datetime.now()
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "active")]}
+    }))
+    monkeypatch.setattr(server_app, "HISTORY_FILE", history_path)
+
+    original_build_stats = server_app._build_stats
+    calls = []
+    first_started = threading.Event()
+    release_first = threading.Event()
+    second_started = threading.Event()
+    release_second = threading.Event()
+
+    def blocking_build_stats(history_data, now=None):
+        calls.append(history_data)
+        if len(calls) == 2:
+            first_started.set()
+            release_first.wait(timeout=2)
+        elif len(calls) == 3:
+            second_started.set()
+            release_second.wait(timeout=2)
+        return original_build_stats(history_data, now=now)
+
+    monkeypatch.setattr(server_app, "_build_stats", blocking_build_stats)
+    client = server_app.app.test_client()
+    assert client.get("/api/stats").get_json()["total_machines"] == 1
+
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "inactive")]}
+    }))
+    stale = client.get("/api/stats").get_json()
+    assert stale["active_machines"] == 1
+    assert first_started.wait(timeout=2)
+
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "active")]},
+        "machine_1": {"entries": [_entry(now - timedelta(minutes=4), "active")]},
+    }))
+    release_first.set()
+    first_thread = server_app._stats_refresh_thread
+    first_thread.join(timeout=2)
+    assert not first_thread.is_alive()
+    assert second_started.wait(timeout=2)
+
+    during_rebuild = client.get("/api/stats").get_json()
+    assert during_rebuild["total_machines"] == 1
+    assert during_rebuild["active_machines"] == 1
+    assert len(calls) == 3
+
+    release_second.set()
+    second_thread = server_app._stats_refresh_thread
+    second_thread.join(timeout=2)
+    assert not second_thread.is_alive()
+    refreshed = client.get("/api/stats").get_json()
+    assert refreshed["total_machines"] == 2
+    assert refreshed["active_machines"] == 2
 
 
 def test_stats_handles_malformed_history_gracefully(tmp_path, monkeypatch):
