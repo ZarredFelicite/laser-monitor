@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 
 import server.app as server_app
@@ -75,3 +76,66 @@ def test_trusted_active_and_inactive_periods_determine_uptime():
     ]
 
     assert calculate_machine_uptime(entries, start, end) == 50.0
+
+
+def test_hourly_activity_returns_24_buckets_and_preserves_partial_hours():
+    now = datetime(2026, 1, 1, 12, 34)
+    entries = [
+        _entry(datetime(2026, 1, 1, 11, 0), "active"),
+        _entry(datetime(2026, 1, 1, 11, 30), "inactive"),
+        _entry(datetime(2026, 1, 1, 12, 15), "active"),
+    ]
+
+    activity = server_app.generate_hourly_activity(
+        {"machine_0": {"entries": entries}}, now=now
+    )["machine_0"]
+
+    assert len(activity) == 24
+    assert activity[-1]["is_current_hour"] is True
+    assert activity[-2]["activity_percentage"] == 50.0
+    assert activity[-1]["activity_percentage"] == 55.9
+
+
+def test_stats_cache_reuses_snapshot_and_invalidates_on_history_change(tmp_path, monkeypatch):
+    history_path = tmp_path / "machine_history.json"
+    now = datetime.now()
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "active")]}
+    }))
+    monkeypatch.setattr(server_app, "HISTORY_FILE", history_path)
+
+    calls = []
+    original_build_stats = server_app._build_stats
+
+    def tracked_build_stats(history_data, now=None):
+        calls.append(history_data)
+        return original_build_stats(history_data, now=now)
+
+    monkeypatch.setattr(server_app, "_build_stats", tracked_build_stats)
+    client = server_app.app.test_client()
+
+    first = client.get("/api/stats").get_json()
+    second = client.get("/api/stats").get_json()
+    assert first["active_machines"] == second["active_machines"] == 1
+    assert len(calls) == 1
+
+    history_path.write_text(json.dumps({
+        "machine_0": {"entries": [_entry(now - timedelta(minutes=5), "inactive")]}
+    }))
+    changed = client.get("/api/stats").get_json()
+    assert changed["inactive_machines"] == 1
+    assert changed["active_machines"] == 0
+    assert len(calls) == 2
+
+
+def test_stats_handles_malformed_history_gracefully(tmp_path, monkeypatch):
+    history_path = tmp_path / "machine_history.json"
+    history_path.write_text("not valid json")
+    monkeypatch.setattr(server_app, "HISTORY_FILE", history_path)
+
+    response = server_app.app.test_client().get("/api/stats")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert data["error"].startswith("Unable to load machine history:")
+    assert data["hourly_activity"] == {}

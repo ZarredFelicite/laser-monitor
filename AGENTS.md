@@ -5,6 +5,12 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-25: Dashboard stats and refresh performance
+
+- Reduced hourly activity output to 24 buckets with one parsed/aggregated history pass.
+- Added thread-safe history-state stats caching with malformed/missing-file handling.
+- Updated dashboard charts in place, removed the duplicate initial image request, and disabled Flask debug/reloader startup.
+
 ### 2026-07-21: Daylight red-core tuning
 
 - Detects top-lamp emission from red-channel core intensity and occupied core area, avoiding unstable grayscale thresholds for saturated red lamps while rejecting saved daylight lens reflections.

@@ -839,6 +839,7 @@
 
     <script>
         let machineCharts = {};
+        let machineChartElements = {};
         
         function refreshDashboard() {
             console.log('Refreshing dashboard...');
@@ -1032,102 +1033,112 @@
         
         function updateCharts(machineHourlyData) {
             const container = document.getElementById('charts-container');
-            
-            // Destroy existing charts
-            Object.values(machineCharts).forEach(chart => {
-                if (chart) chart.destroy();
+            const machineIds = new Set(Object.keys(machineHourlyData));
+            const noDataMessage = container.querySelector('.no-chart-data');
+
+            // Remove only machines that disappeared; keep existing Chart.js instances.
+            Object.keys(machineCharts).forEach(machineId => {
+                if (!machineIds.has(machineId)) {
+                    machineCharts[machineId].destroy();
+                    machineChartElements[machineId].remove();
+                    delete machineCharts[machineId];
+                    delete machineChartElements[machineId];
+                }
             });
-            machineCharts = {};
-            
-            // Clear container
-            container.innerHTML = '';
-            
-            if (Object.keys(machineHourlyData).length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No machine activity data available</div>';
+
+            if (machineIds.size === 0) {
+                if (!noDataMessage) {
+                    const message = document.createElement('div');
+                    message.className = 'no-chart-data';
+                    message.style.cssText = 'text-align: center; color: #666; padding: 20px;';
+                    message.textContent = 'No machine activity data available';
+                    container.appendChild(message);
+                }
                 return;
             }
-            
-            // Create a chart for each machine
+            if (noDataMessage) {
+                noDataMessage.remove();
+            }
+
             Object.entries(machineHourlyData).forEach(([machineId, hourlyData]) => {
-                // Create machine chart container
-                const machineDiv = document.createElement('div');
-                machineDiv.className = 'machine-chart';
-                
-                const title = document.createElement('h3');
-                title.textContent = `${machineId} - 24 Hour Activity`;
-                machineDiv.appendChild(title);
-                
-                const chartContainer = document.createElement('div');
-                chartContainer.className = 'chart-container';
-                
-                const canvas = document.createElement('canvas');
-                canvas.id = `chart-${machineId}`;
-                chartContainer.appendChild(canvas);
-                machineDiv.appendChild(chartContainer);
-                
-                container.appendChild(machineDiv);
-                
-                // Create chart
-                const ctx = canvas.getContext('2d');
-                const labels = hourlyData.map(item => item.hour);
-                const data = hourlyData.map(item => item.activity_percentage);
-                
-                // Color bars differently - current hour in different color
-                const backgroundColors = hourlyData.map(item => 
-                    item.is_current_hour ? 'rgba(40, 167, 69, 0.6)' : 'rgba(0, 123, 255, 0.6)'
-                );
-                const borderColors = hourlyData.map(item => 
-                    item.is_current_hour ? 'rgba(40, 167, 69, 1)' : 'rgba(0, 123, 255, 1)'
-                );
-                
-                machineCharts[machineId] = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Uptime %',
-                            data: data,
-                            backgroundColor: backgroundColors,
-                            borderColor: borderColors,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
-                                ticks: {
-                                    callback: function(value) {
-                                        return value + '%';
+                let chart = machineCharts[machineId];
+                if (!chart) {
+                    const machineDiv = document.createElement('div');
+                    machineDiv.className = 'machine-chart';
+
+                    const title = document.createElement('h3');
+                    title.textContent = `${machineId} - 24 Hour Activity`;
+                    machineDiv.appendChild(title);
+
+                    const chartContainer = document.createElement('div');
+                    chartContainer.className = 'chart-container';
+                    const canvas = document.createElement('canvas');
+                    canvas.id = `chart-${machineId}`;
+                    chartContainer.appendChild(canvas);
+                    machineDiv.appendChild(chartContainer);
+                    container.appendChild(machineDiv);
+                    machineChartElements[machineId] = machineDiv;
+
+                    chart = new Chart(canvas.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: [],
+                            datasets: [{
+                                label: 'Uptime %',
+                                data: [],
+                                backgroundColor: [],
+                                borderColor: [],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + '%';
+                                        }
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Hour of Day'
                                     }
                                 }
                             },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Hour of Day'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    afterLabel: function(context) {
-                                        const dataIndex = context.dataIndex;
-                                        const isCurrentHour = hourlyData[dataIndex].is_current_hour;
-                                        return isCurrentHour ? '(Current hour - partial data)' : '';
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        afterLabel: function(context) {
+                                            const item = context.chart.$hourlyData?.[context.dataIndex];
+                                            return item?.is_current_hour ? '(Current hour - partial data)' : '';
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                    machineCharts[machineId] = chart;
+                }
+
+                const labels = hourlyData.map(item => item.hour);
+                const dataset = chart.data.datasets[0];
+                dataset.data = hourlyData.map(item => item.activity_percentage);
+                dataset.backgroundColor = hourlyData.map(item =>
+                    item.is_current_hour ? 'rgba(40, 167, 69, 0.6)' : 'rgba(0, 123, 255, 0.6)'
+                );
+                dataset.borderColor = hourlyData.map(item =>
+                    item.is_current_hour ? 'rgba(40, 167, 69, 1)' : 'rgba(0, 123, 255, 1)'
+                );
+                chart.data.labels = labels;
+                chart.$hourlyData = hourlyData;
+                chart.update('none');
             });
         }
         
@@ -1487,10 +1498,9 @@
         
         // Load initial data
         document.addEventListener('DOMContentLoaded', function() {
-            // Load detection boxes first, then load stats and image
+            // The image element's initial src already loads the latest frame.
             loadDetectionBoxes();
             loadStats();
-            refreshImage();
             
             // Load notification settings to update pause indicator
             loadSettings();

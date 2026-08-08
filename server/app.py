@@ -8,11 +8,11 @@ import os
 import json
 import tempfile
 import math
+import threading
 from numbers import Real
 from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, render_template, jsonify, send_file, request
-import glob
 from dotenv import load_dotenv, set_key, find_dotenv
 
 app = Flask(__name__)
@@ -28,6 +28,57 @@ WEB_UI_CONFIG_FILE = PROJECT_ROOT / "web_ui.config.py"
 SERVER_DIR = Path(__file__).parent
 SETTINGS_FILE = SERVER_DIR / "notification_settings.json"
 ENV_FILE = Path(__file__).parent.parent / ".env"
+
+_stats_cache_lock = threading.RLock()
+_stats_cache_state = None
+_stats_cache = None
+
+
+def _empty_stats(error=None):
+    return {
+        'current_status': 'unknown',
+        'last_update': None,
+        'total_machines': 0,
+        'active_machines': 0,
+        'inactive_machines': 0,
+        'unknown_machines': 0,
+        'overall_uptime_1h': None,
+        'machine_uptimes_1h': {},
+        'hourly_activity': {},
+        'error': error,
+    }
+
+
+def _history_file_state():
+    """Return a cache key that changes when the history file is replaced or edited."""
+    try:
+        stat = HISTORY_FILE.stat()
+    except OSError:
+        return (str(HISTORY_FILE), None)
+    return (str(HISTORY_FILE), stat.st_mtime_ns, stat.st_size)
+
+
+def _parse_history_entries(entries):
+    """Parse and sort valid history entries once, ignoring malformed records."""
+    if not isinstance(entries, list):
+        return []
+
+    parsed = []
+    for entry in entries:
+        if not isinstance(entry, dict) or 'timestamp' not in entry:
+            continue
+        try:
+            timestamp = datetime.fromisoformat(str(entry['timestamp']))
+            # Runtime history is naive, but accept offset timestamps without
+            # allowing one malformed record to break the dashboard response.
+            if timestamp.tzinfo is not None:
+                timestamp = timestamp.astimezone().replace(tzinfo=None)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        parsed.append((timestamp, entry.get('status', 'unknown')))
+    parsed.sort(key=lambda item: item[0])
+    return parsed
+
 
 @app.route('/')
 def dashboard():
@@ -90,97 +141,118 @@ def latest_image():
 
 @app.route('/api/stats')
 def machine_stats():
-    """Get current machine statistics and recent history"""
-    try:
-        stats = {
-            'current_status': 'unknown',
-            'last_update': None,
-            'total_machines': 0,
-            'active_machines': 0,
-            'inactive_machines': 0,
-            'unknown_machines': 0,
-            'overall_uptime_1h': None,
-            'machine_uptimes_1h': {},
-            'hourly_activity': [],
-            'error': None
-        }
-        
-        # Check if history file exists
-        if not HISTORY_FILE.exists():
-            stats['error'] = 'No machine history found'
-            return jsonify(stats)
-        
-        # Load machine history
-        with open(HISTORY_FILE, 'r') as f:
-            history_data = json.load(f)
-        
-        if not history_data:
-            stats['error'] = 'Empty machine history'
-            return jsonify(stats)
-        
-        # Calculate current status from all machines
-        active_count = 0
-        inactive_count = 0
-        unknown_count = 0
-        latest_timestamp = None
-        
-        for machine_id, machine_data in history_data.items():
-            entries = machine_data.get('entries', [])
-            if entries:
-                # Get the latest entry for this machine
-                latest_entry = max(entries, key=lambda e: e['timestamp'])
-                entry_time = datetime.fromisoformat(latest_entry['timestamp'])
-                
-                if latest_timestamp is None or entry_time > latest_timestamp:
-                    latest_timestamp = entry_time
-                
-                # Count active/inactive machines
-                if latest_entry['status'] == 'active':
-                    active_count += 1
-                elif latest_entry['status'] == 'inactive':
-                    inactive_count += 1
-                else:
-                    unknown_count += 1
-        
-        # Calculate true uptime for the last hour
-        overall_uptime, machine_uptimes = calculate_overall_uptime(history_data, hours_back=1)
-        
-        stats.update({
-            'total_machines': len(history_data),
-            'active_machines': active_count,
-            'inactive_machines': inactive_count,
-            'unknown_machines': unknown_count,
-            'last_update': latest_timestamp.isoformat() if latest_timestamp else None,
-            'current_status': (
-                'active' if active_count > 0
-                else 'unknown' if unknown_count > 0
-                else 'inactive'
-            ),
-            'overall_uptime_1h': overall_uptime,
-            'machine_uptimes_1h': machine_uptimes
-        })
-        
-        # Generate hourly activity data for the last 24 hours (per machine)
-        stats['hourly_activity'] = generate_hourly_activity(history_data)
-        
-        return jsonify(stats)
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    """Get current machine statistics and recent history."""
+    return jsonify(_get_cached_stats())
 
-def _calculate_machine_uptime_and_coverage(entries, start_time, end_time):
-    """Return uptime over trusted intervals and their duration in seconds."""
-    parsed = sorted(
-        (
-            datetime.fromisoformat(entry['timestamp']),
-            entry.get('status', 'unknown'),
+
+def _build_stats(history_data, now=None):
+    """Build dashboard statistics from one parsed snapshot of the history."""
+    if not isinstance(history_data, dict):
+        return _empty_stats('Invalid machine history format')
+    if not history_data:
+        return _empty_stats('Empty machine history')
+
+    now = now or datetime.now()
+    parsed_history = {
+        machine_id: _parse_history_entries(
+            machine_data.get('entries', [])
+            if isinstance(machine_data, dict) else []
         )
-        for entry in entries
-        if datetime.fromisoformat(entry['timestamp']) <= end_time
+        for machine_id, machine_data in history_data.items()
+    }
+
+    active_count = 0
+    inactive_count = 0
+    unknown_count = 0
+    latest_timestamp = None
+
+    for entries in parsed_history.values():
+        latest_entry = next(
+            (entry for entry in reversed(entries) if entry[0] <= now),
+            None,
+        )
+        if latest_entry is None:
+            continue
+        entry_time, status = latest_entry
+        if latest_timestamp is None or entry_time > latest_timestamp:
+            latest_timestamp = entry_time
+        if status == 'active':
+            active_count += 1
+        elif status == 'inactive':
+            inactive_count += 1
+        else:
+            unknown_count += 1
+
+    overall_uptime, machine_uptimes = calculate_overall_uptime(
+        history_data,
+        hours_back=1,
+        now=now,
+        parsed_history=parsed_history,
     )
+    stats = _empty_stats()
+    stats.update({
+        'total_machines': len(history_data),
+        'active_machines': active_count,
+        'inactive_machines': inactive_count,
+        'unknown_machines': unknown_count,
+        'last_update': latest_timestamp.isoformat() if latest_timestamp else None,
+        'current_status': (
+            'active' if active_count > 0
+            else 'unknown' if unknown_count > 0
+            else 'inactive'
+        ),
+        'overall_uptime_1h': overall_uptime,
+        'machine_uptimes_1h': machine_uptimes,
+        'hourly_activity': generate_hourly_activity(
+            history_data, now=now, parsed_history=parsed_history
+        ),
+    })
+    return stats
+
+
+def _get_cached_stats():
+    """Load and cache stats while invalidating on any history file change."""
+    global _stats_cache_state, _stats_cache
+
+    with _stats_cache_lock:
+        for attempt in range(2):
+            state = _history_file_state()
+            if state == _stats_cache_state and _stats_cache is not None:
+                return _stats_cache
+
+            if state[1] is None:
+                stats = _empty_stats('No machine history found')
+            else:
+                try:
+                    with HISTORY_FILE.open('r') as history_file:
+                        history_data = json.load(history_file)
+                except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                    stats = _empty_stats(f'Unable to load machine history: {exc}')
+                else:
+                    stats = _build_stats(history_data)
+
+            # History writes are atomic, but retry if a replacement happened
+            # while this request was reading the file.
+            current_state = _history_file_state()
+            if current_state != state and attempt == 0:
+                continue
+            if current_state == state:
+                _stats_cache_state = state
+                _stats_cache = stats
+            return stats
+
+        return stats
+
+def _calculate_machine_uptime_and_coverage(
+    entries, start_time, end_time, parsed_entries=None
+):
+    """Return uptime over trusted intervals and their duration in seconds."""
+    parsed = parsed_entries if parsed_entries is not None else _parse_history_entries(entries)
     current_status = 'unknown'
     period_entries = []
     for timestamp, status in parsed:
+        if timestamp > end_time:
+            break
         if timestamp <= start_time:
             current_status = status
         else:
@@ -214,19 +286,28 @@ def calculate_machine_uptime(entries, start_time, end_time):
     uptime, _ = _calculate_machine_uptime_and_coverage(entries, start_time, end_time)
     return uptime
 
-def calculate_overall_uptime(history_data, hours_back=1):
-    """Calculate overall uptime and per-machine uptime for the last N hours"""
-    now = datetime.now()
+
+def calculate_overall_uptime(
+    history_data, hours_back=1, now=None, parsed_history=None
+):
+    """Calculate overall uptime and per-machine uptime for the last N hours."""
+    now = now or datetime.now()
     start_time = now - timedelta(hours=hours_back)
-    
+    parsed_history = parsed_history or {
+        machine_id: _parse_history_entries(
+            machine_data.get('entries', [])
+            if isinstance(machine_data, dict) else []
+        )
+        for machine_id, machine_data in history_data.items()
+    }
+
     machine_uptimes = {}
     total_uptime_sum = 0
     machine_count = 0
-    
-    for machine_id, machine_data in history_data.items():
-        entries = machine_data.get('entries', [])
+
+    for machine_id, entries in parsed_history.items():
         uptime, known_seconds = _calculate_machine_uptime_and_coverage(
-            entries, start_time, now
+            [], start_time, now, parsed_entries=entries
         )
         if known_seconds <= 0:
             machine_uptimes[machine_id] = None
@@ -234,45 +315,86 @@ def calculate_overall_uptime(history_data, hours_back=1):
         machine_uptimes[machine_id] = round(uptime, 1)
         total_uptime_sum += uptime
         machine_count += 1
-    
+
     overall_uptime = (
         round(total_uptime_sum / machine_count, 1)
         if machine_count > 0 else None
     )
-    
+
     return overall_uptime, machine_uptimes
 
-def generate_hourly_activity(history_data):
-    """Generate hourly activity data for the last 7 days per machine"""
-    now = datetime.now()
+
+def _hourly_uptime(parsed_entries, now, bucket_count=24):
+    """Aggregate trusted active/inactive intervals into hourly buckets in one pass."""
+    current_hour = now.replace(minute=0, second=0, microsecond=0)
+    window_start = current_hour - timedelta(hours=bucket_count - 1)
+    buckets = [[0.0, 0.0] for _ in range(bucket_count)]  # active, known seconds
+
+    current_status = 'unknown'
+    entry_index = 0
+    while entry_index < len(parsed_entries):
+        timestamp, status = parsed_entries[entry_index]
+        if timestamp > window_start:
+            break
+        if timestamp <= now:
+            current_status = status
+        entry_index += 1
+
+    cursor = window_start
+    for bucket_index in range(bucket_count):
+        bucket_end = now if bucket_index == bucket_count - 1 else cursor + timedelta(hours=1)
+        while entry_index < len(parsed_entries):
+            timestamp, status = parsed_entries[entry_index]
+            if timestamp > bucket_end or timestamp > now:
+                break
+            elapsed = (timestamp - cursor).total_seconds()
+            if current_status in {'active', 'inactive'}:
+                buckets[bucket_index][1] += elapsed
+                if current_status == 'active':
+                    buckets[bucket_index][0] += elapsed
+            current_status = status
+            cursor = timestamp
+            entry_index += 1
+
+        elapsed = (bucket_end - cursor).total_seconds()
+        if current_status in {'active', 'inactive'}:
+            buckets[bucket_index][1] += elapsed
+            if current_status == 'active':
+                buckets[bucket_index][0] += elapsed
+        cursor = bucket_end
+
+    return buckets
+
+
+def generate_hourly_activity(history_data, now=None, parsed_history=None):
+    """Generate 24 hourly activity buckets for each machine."""
+    now = now or datetime.now()
+    parsed_history = parsed_history or {
+        machine_id: _parse_history_entries(
+            machine_data.get('entries', [])
+            if isinstance(machine_data, dict) else []
+        )
+        for machine_id, machine_data in history_data.items()
+    }
     current_hour = now.replace(minute=0, second=0, microsecond=0)
     machine_hourly_data = {}
-    
-    # Initialize data structure for each machine
-    for machine_id in history_data.keys():
+
+    for machine_id, entries in parsed_history.items():
+        hourly_uptime = _hourly_uptime(entries, now)
         machine_hourly_data[machine_id] = []
-    
-    # Create 168 hourly buckets (7 days * 24 hours)
-    for i in range(168):
-        hour_start = current_hour - timedelta(hours=167-i)
-        # For the current hour (i == 167), use current time as end
-        if i == 167:
-            hour_end = now
-        else:
-            hour_end = hour_start + timedelta(hours=1)
-        
-        # Calculate uptime for each machine for this hour
-        for machine_id, machine_data in history_data.items():
-            entries = machine_data.get('entries', [])
-            uptime = calculate_machine_uptime(entries, hour_start, hour_end)
-            
+        for index, (active_seconds, known_seconds) in enumerate(hourly_uptime):
+            hour_start = current_hour - timedelta(hours=23 - index)
+            uptime = (
+                (active_seconds / known_seconds) * 100
+                if known_seconds > 0 else 0.0
+            )
             machine_hourly_data[machine_id].append({
                 'hour': hour_start.strftime('%m/%d %H:00'),
                 'activity_percentage': round(uptime, 1),
                 'active_minutes': round((uptime / 100) * 60, 1),
-                'is_current_hour': i == 167
+                'is_current_hour': index == 23,
             })
-    
+
     return machine_hourly_data
 
 def load_web_ui_config():
@@ -637,12 +759,9 @@ if __name__ == '__main__':
     print(f"History file: {HISTORY_FILE}")
     print(f"Dashboard will be available at: http://localhost:5000")
     
-    debug_enabled = os.getenv("LASER_MONITOR_SERVER_DEBUG", "").lower() in {
-        "1", "true", "yes"
-    }
     app.run(
-        debug=debug_enabled,
-        use_reloader=debug_enabled,
+        debug=False,
+        use_reloader=False,
         host='0.0.0.0',
         port=5000,
     )
