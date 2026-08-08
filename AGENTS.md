@@ -5,6 +5,11 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-07-25: Management-focused dashboard hierarchy
+
+- Reworked `server/templates/dashboard.html` around executive scanning: fleet uptime and machine state lead, the full-width 7-day hourly chart is the primary workspace, and the latest camera frame is secondary verification.
+- Replaced decorative emoji UI copy with restrained business language while preserving settings, detection-box controls, APIs, and existing chart refresh behavior.
+
 ### 2026-07-25: Seven-day hourly dashboard history
 
 - Dashboard activity charts now return 168 hourly buckets (7 days), with accurate first/current-hour labels while preserving one-pass aggregation and in-place Chart.js refreshes.
