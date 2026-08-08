@@ -378,7 +378,7 @@ def calculate_overall_uptime(
     return overall_uptime, machine_uptimes
 
 
-def _hourly_uptime(parsed_entries, now, bucket_count=24):
+def _hourly_uptime(parsed_entries, now, bucket_count=168):
     """Aggregate trusted active/inactive intervals into hourly buckets in one pass."""
     current_hour = now.replace(minute=0, second=0, microsecond=0)
     window_start = current_hour - timedelta(hours=bucket_count - 1)
@@ -421,7 +421,7 @@ def _hourly_uptime(parsed_entries, now, bucket_count=24):
 
 
 def generate_hourly_activity(history_data, now=None, parsed_history=None):
-    """Generate 24 hourly activity buckets for each machine."""
+    """Generate seven days of hourly activity buckets for each machine."""
     now = now or datetime.now()
     parsed_history = parsed_history or {
         machine_id: _parse_history_entries(
@@ -437,7 +437,7 @@ def generate_hourly_activity(history_data, now=None, parsed_history=None):
         hourly_uptime = _hourly_uptime(entries, now)
         machine_hourly_data[machine_id] = []
         for index, (active_seconds, known_seconds) in enumerate(hourly_uptime):
-            hour_start = current_hour - timedelta(hours=23 - index)
+            hour_start = current_hour - timedelta(hours=167 - index)
             uptime = (
                 (active_seconds / known_seconds) * 100
                 if known_seconds > 0 else 0.0
@@ -446,7 +446,7 @@ def generate_hourly_activity(history_data, now=None, parsed_history=None):
                 'hour': hour_start.strftime('%m/%d %H:00'),
                 'activity_percentage': round(uptime, 1),
                 'active_minutes': round((uptime / 100) * 60, 1),
-                'is_current_hour': index == 23,
+                'is_current_hour': index == 167,
             })
 
     return machine_hourly_data

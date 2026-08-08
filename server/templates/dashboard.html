@@ -826,7 +826,7 @@
         
         <!-- Activity Charts -->
         <div class="card" style="grid-column: 1 / -1;">
-            <h2>📈 24-Hour Activity by Machine</h2>
+            <h2>📈 7-Day Hourly Activity by Machine</h2>
             <div id="charts-container">
                 <!-- Individual machine charts will be populated here -->
             </div>
@@ -1067,7 +1067,7 @@
                     machineDiv.className = 'machine-chart';
 
                     const title = document.createElement('h3');
-                    title.textContent = `${machineId} - 24 Hour Activity`;
+                    title.textContent = `${machineId} - 7-Day Activity`;
                     machineDiv.appendChild(title);
 
                     const chartContainer = document.createElement('div');
@@ -1107,7 +1107,7 @@
                                 x: {
                                     title: {
                                         display: true,
-                                        text: 'Hour of Day'
+                                        text: 'Date and Hour'
                                     }
                                 }
                             },

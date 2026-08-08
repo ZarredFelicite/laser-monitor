@@ -79,7 +79,7 @@ def test_trusted_active_and_inactive_periods_determine_uptime():
     assert calculate_machine_uptime(entries, start, end) == 50.0
 
 
-def test_hourly_activity_returns_24_buckets_and_preserves_partial_hours():
+def test_hourly_activity_returns_7_days_of_buckets_and_preserves_partial_hours():
     now = datetime(2026, 1, 1, 12, 34)
     entries = [
         _entry(datetime(2026, 1, 1, 11, 0), "active"),
@@ -91,7 +91,10 @@ def test_hourly_activity_returns_24_buckets_and_preserves_partial_hours():
         {"machine_0": {"entries": entries}}, now=now
     )["machine_0"]
 
-    assert len(activity) == 24
+    assert len(activity) == 168
+    assert activity[0]["hour"] == "12/25 13:00"
+    assert activity[0]["is_current_hour"] is False
+    assert activity[-1]["hour"] == "01/01 12:00"
     assert activity[-1]["is_current_hour"] is True
     assert activity[-2]["activity_percentage"] == 50.0
     assert activity[-1]["activity_percentage"] == 55.9
