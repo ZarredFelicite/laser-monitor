@@ -71,17 +71,17 @@ class DetectionConfig:
 
     # Brightness threshold mode (alternative to color-based detection)
     use_brightness_threshold: bool = True  # Enable brightness-based detection instead of color analysis
-    brightness_threshold_ratios: List[List[float]] = field(default_factory=lambda: [[1.7, 2.2]])  # Per-ROI, per-section ratios [[top_ratio, mid_ratio], ...] for each visual_prompt (optimized: 92.9% accuracy)
+    brightness_threshold_ratios: List[List[float]] = field(default_factory=lambda: [[1.7, 2.2]])  # Per-ROI, per-section ratios [[top_ratio, mid_ratio], ...] for each visual_prompt (current fixtures: 100% with fallback for ROI 1)
 
     # Drift-tolerant bbox mode. Registration uses stable scene structure while
     # classification compares each light with its local, per-frame background.
     robust_detection_enabled: bool = True
     drift_tracking_enabled: bool = True
-    drift_max_total_pixels: float = 50.0
+    drift_max_total_pixels: float = 75.0
     drift_max_step_pixels: float = 8.0
     drift_min_global_response: float = 0.04
     drift_min_local_score: float = 0.20
-    drift_local_search_margin: int = 4
+    drift_local_search_margin: int = 20
     drift_hold_cycles: int = 2
     classification_ambiguity_margin: float = 0.08
     capture_burst_frames: int = 3

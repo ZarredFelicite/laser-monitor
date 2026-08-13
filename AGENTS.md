@@ -5,6 +5,12 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-08-13: Retuned drift bounds for native-resolution capture
+
+- Added the unmatched `rpicam4-test-images/test5.jpg` and native-resolution `test.jpg` regression fixtures (`tests/test5.jpg`, `tests/test9.jpg`) with visually verified states.
+- Increased bounded ROI drift tolerance to 75 pixels and local search margin to 20 pixels so the native-resolution capture resolves both machines without changing monitoring cadence or resource limits.
+- The 18-observation fixture suite now classifies every machine correctly.
+
 ### 2026-07-25: Management-focused dashboard hierarchy
 
 - Reworked `server/templates/dashboard.html` around executive scanning: fleet uptime and machine state lead, the full-width 7-day hourly chart is the primary workspace, and the latest camera frame is secondary verification.
