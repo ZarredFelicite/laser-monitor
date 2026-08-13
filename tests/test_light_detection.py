@@ -113,6 +113,41 @@ def test_working_light_only_is_active():
     assert observation.known
 
 
+def test_partial_red_core_reflection_does_not_prove_working():
+    # Preserved 10:45 raw metrics: partial red-core reflection/appearance.
+    top_features = {
+        "red_p90": 249.1,
+        "red_core_fraction": 0.44722222222222224,
+        "red_dominance": 68.5,
+    }
+    mid_features = {
+        "warm_p90": 217.1,
+        "warm_core_fraction": 0.175,
+    }
+
+    top_active = AdaptiveLightClassifier._red_core_fallback_active(
+        ratio=1.505902723122934,
+        threshold=1.7,
+        features=top_features,
+    )
+    mid_active = (
+        mid_features["warm_p90"] >= 190.0
+        and mid_features["warm_core_fraction"] >= 0.12
+    )
+
+    assert not top_active
+    assert mid_active  # Retain the strong amber fallback.
+    assert ("machine_on_only", "inactive") == (
+        ("machine_active", "active")
+        if top_active and mid_active
+        else ("machine_working_only", "active")
+        if top_active
+        else ("machine_on_only", "inactive")
+        if mid_active
+        else ("machine_off", "inactive")
+    )
+
+
 @pytest.mark.parametrize(
     ("image_name", "box"),
     [

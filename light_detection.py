@@ -308,6 +308,22 @@ class AdaptiveLightClassifier:
             ),
         }
 
+    @staticmethod
+    def _red_core_fallback_active(
+        ratio: float, threshold: float, features: Dict[str, float]
+    ) -> bool:
+        """Accept red-core evidence only when it is not a partial false positive."""
+        return (
+            features["red_p90"] >= 200.0
+            and features["red_core_fraction"] >= 0.15
+            and features["red_dominance"] >= 30.0
+            and (
+                ratio >= threshold
+                or features["red_dominance"] < 60.0
+                or features["red_core_fraction"] >= 0.8
+            )
+        )
+
     def classify(
         self,
         frame: np.ndarray,
@@ -367,11 +383,9 @@ class AdaptiveLightClassifier:
         top_active = active(top_ratio, top_threshold, top_margin, top_features)
         if not top_active:
             # A lit red lamp has both a bright core and strong red dominance;
-            # this excludes the dim red-lens highlights seen in daylight.
-            top_active = (
-                top_features["red_p90"] >= 200.0
-                and top_features["red_core_fraction"] >= 0.15
-                and top_features["red_dominance"] >= 30.0
+            # this excludes partial red-core reflections seen in daylight.
+            top_active = self._red_core_fallback_active(
+                top_ratio, top_threshold, top_features
             )
         mid_active = active(
             mid_ratio,

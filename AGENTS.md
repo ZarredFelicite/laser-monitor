@@ -5,6 +5,11 @@ Real-time laser cutter monitoring system using indicator light detection (bright
 
 ## Recent Updates
 
+### 2026-08-13: Guard partial red-core false positives
+
+- Red-core fallback now requires either threshold-level brightness, lower red dominance, or a nearly fully occupied red core; this rejects the labeled inactive 10:45 live appearance without changing amber fallback or transition hysteresis.
+- Added a metric-only regression for the preserved 10:45 raw metrics; existing 18 fixture states remain unchanged.
+
 ### 2026-08-13: Retuned drift bounds for native-resolution capture
 
 - Added the unmatched `rpicam4-test-images/test5.jpg` and native-resolution `test.jpg` regression fixtures (`tests/test5.jpg`, `tests/test9.jpg`) with visually verified states.
